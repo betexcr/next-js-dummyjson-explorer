@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+dist
+coverage
+playwright-report
+test-results
+.vite
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.agent/*.local.*
+
+# Autonomous harness artifacts (not project code)
+.opencode/
+.scripts/
+dummyjson-autonomous-state-files.zip

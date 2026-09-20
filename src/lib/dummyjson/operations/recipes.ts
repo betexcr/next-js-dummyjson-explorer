@@ -1,0 +1,167 @@
+import type { ApiOperation } from "../types";
+import {
+  body,
+  delayParam,
+  listParams,
+  op,
+  pathId,
+} from "./helpers";
+
+const DOCS = "https://dummyjson.com/docs/recipes";
+
+export const recipesOperations: ApiOperation[] = [
+  op(
+    "recipes-list",
+    "recipes",
+    "Get all recipes",
+    "GET",
+    "/recipes",
+    "Returns a paginated list of recipes. By default you get 30 items.",
+    `${DOCS}#recipes-all`,
+    {
+      parameters: listParams({ sort: true }),
+      tags: ["recipes", "list", "pagination"],
+    },
+  ),
+  op(
+    "recipes-get",
+    "recipes",
+    "Get a single recipe",
+    "GET",
+    "/recipes/{id}",
+    "Returns a single recipe by id.",
+    `${DOCS}#recipes-single`,
+    {
+      parameters: [pathId("id", "The recipe id."), ...listParams()],
+      responseKind: "json",
+      tags: ["recipes", "by id"],
+    },
+  ),
+  op(
+    "recipes-search",
+    "recipes",
+    "Search recipes",
+    "GET",
+    "/recipes/search",
+    "Search for recipes by keyword (`q`).",
+    `${DOCS}#recipes-search`,
+    {
+      parameters: [
+        {
+          name: "q",
+          in: "query",
+          type: "string",
+          required: true,
+          description: "Search keyword.",
+          placeholder: "Margherita",
+        },
+        ...listParams(),
+      ],
+      tags: ["recipes", "search"],
+    },
+  ),
+  op(
+    "recipes-tags",
+    "recipes",
+    "Get all recipe tags",
+    "GET",
+    "/recipes/tags",
+    "Returns all recipe tags as a list of strings.",
+    `${DOCS}#recipes-tags`,
+    {
+      parameters: [delayParam()],
+      responseKind: "json",
+      tags: ["recipes", "tags"],
+    },
+  ),
+  op(
+    "recipes-tag",
+    "recipes",
+    "Get recipes by tag",
+    "GET",
+    "/recipes/tag/{tag}",
+    "Returns recipes matching a tag.",
+    `${DOCS}#recipes-tag`,
+    {
+      parameters: [
+        {
+          name: "tag",
+          in: "path",
+          type: "string",
+          required: true,
+          description: "Recipe tag, e.g. `Pakistani`.",
+          placeholder: "Pakistani",
+        },
+        ...listParams(),
+      ],
+      tags: ["recipes", "tags"],
+    },
+  ),
+  op(
+    "recipes-meal-type",
+    "recipes",
+    "Get recipes by meal type",
+    "GET",
+    "/recipes/meal-type/{mealType}",
+    "Returns recipes matching a meal type (breakfast, lunch, dinner, snack, dessert).",
+    `${DOCS}#recipes-meal`,
+    {
+      parameters: [
+        {
+          name: "mealType",
+          in: "path",
+          type: "string",
+          required: true,
+          description: "Meal type, e.g. `snack`.",
+          placeholder: "snack",
+        },
+        ...listParams(),
+      ],
+      tags: ["recipes", "meal type"],
+    },
+  ),
+  op(
+    "recipes-add",
+    "recipes",
+    "Add a recipe",
+    "POST",
+    "/recipes/add",
+    "Simulates creating a recipe. Returns the created recipe with a new id.",
+    `${DOCS}#recipes-add`,
+    {
+      parameters: [delayParam()],
+      requestBody: body({ name: "Tasty Pizza", cuisine: "Italian" }),
+      responseKind: "json",
+      tags: ["recipes", "crud", "create"],
+    },
+  ),
+  op(
+    "recipes-update",
+    "recipes",
+    "Update a recipe",
+    "PUT",
+    "/recipes/{id}",
+    "Simulates updating a recipe (PUT or PATCH). Returns the recipe with modified data.",
+    `${DOCS}#recipes-update`,
+    {
+      parameters: [pathId("id", "The recipe id."), ...listParams()],
+      requestBody: body({ name: "Tasty Pizza" }),
+      responseKind: "json",
+      tags: ["recipes", "crud", "update"],
+    },
+  ),
+  op(
+    "recipes-delete",
+    "recipes",
+    "Delete a recipe",
+    "DELETE",
+    "/recipes/{id}",
+    "Simulates deleting a recipe. Returns the deleted recipe with `isDeleted` and `deletedOn`.",
+    `${DOCS}#recipes-delete`,
+    {
+      parameters: [pathId("id", "The recipe id."), ...listParams()],
+      responseKind: "json",
+      tags: ["recipes", "crud", "delete"],
+    },
+  ),
+];
