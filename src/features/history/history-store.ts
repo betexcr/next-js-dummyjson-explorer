@@ -2,10 +2,14 @@
  * Bounded local request history (TASK-024).
  *
  * Pure store helpers: add/evict/serialize/deserialize plus value sanitizing
- * so secrets (Authorization headers, bearer-style strings) are never
- * persisted.
+ * so secrets (Authorization headers, bearer-style strings, TOTP keys, etc.)
+ * are never persisted.
  */
 import type { ParameterValues } from "@/lib/dummyjson/types";
+import {
+  isSensitiveKey,
+  redactSensitiveJson,
+} from "@/lib/security/sensitive";
 
 export const HISTORY_STORAGE_KEY = "djwb.history";
 export const MAX_HISTORY_ENTRIES = 100;
@@ -20,14 +24,17 @@ export interface HistoryEntry {
   durationMs: number;
 }
 
-const SENSITIVE_KEYS = /^(authorization|bearer|proxy-authorization|x-api-key)$/i;
-
 /** Redacts request values that carry credentials. */
 export function sanitizeValues(values: ParameterValues): ParameterValues {
   const out: ParameterValues = {};
   for (const [key, value] of Object.entries(values)) {
-    if (SENSITIVE_KEYS.test(key)) continue;
-    out[key] = value;
+    if (isSensitiveKey(key)) continue;
+    if (key === "__body" && typeof value === "string") {
+      const sanitizedBody = redactSensitiveJson(value);
+      if (sanitizedBody !== undefined) out[key] = sanitizedBody;
+    } else {
+      out[key] = value;
+    }
   }
   return out;
 }
@@ -55,13 +62,19 @@ function isHistoryEntry(value: unknown): value is HistoryEntry {
   );
 }
 
-/** Loads and validates entries from a raw localStorage payload. */
+/**
+ * Loads and validates entries from a raw localStorage payload. Each entry is
+ * re-sanitized so secrets persisted by older versions of the app are not
+ * replayed or displayed verbatim.
+ */
 export function loadHistory(raw: string | null): HistoryEntry[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isHistoryEntry);
+    return parsed
+      .filter(isHistoryEntry)
+      .map((entry) => ({ ...entry, values: sanitizeValues(entry.values) }));
   } catch {
     return [];
   }

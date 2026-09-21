@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { buildSecurityHeaders } from "./src/lib/security/security-headers";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -9,6 +10,22 @@ const nextConfig: NextConfig = {
   // page non-interactive in E2E runs. Both origins are allowed so the dev
   // server behaves the same for the test runner and for humans.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // Defense-in-depth response headers (TASK-039). The development policy is
+  // intentionally CSP-free (Next dev needs inline scripts + websocket HMR);
+  // the strict policy applies to production builds.
+  async headers() {
+    const env =
+      process.env.NODE_ENV === "development" ? "development" : "production";
+    return [
+      {
+        source: "/:path*",
+        headers: buildSecurityHeaders(env).map((h) => ({
+          key: h.key,
+          value: h.value,
+        })),
+      },
+    ];
+  },
 };
 
 export default nextConfig;

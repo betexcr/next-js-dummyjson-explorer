@@ -15,7 +15,11 @@ import {
 function readEntries(): HistoryEntry[] {
   if (typeof sessionStorage === "undefined") return [];
   try {
-    return loadHistory(sessionStorage.getItem(HISTORY_STORAGE_KEY));
+    const entries = loadHistory(sessionStorage.getItem(HISTORY_STORAGE_KEY));
+    // Rewrite sanitized entries back to storage so legacy secrets are evicted
+    // on first load after a security update.
+    writeEntries(entries);
+    return entries;
   } catch {
     return [];
   }

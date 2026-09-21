@@ -512,15 +512,38 @@ Implemented and verified:
   acceptable for a regression test).
 
 ## TASK-039 — Security review
-Status: `[ ]`
+Status: `[x]`
 
 Review token handling, request injection, unsafe URLs, XSS, arbitrary requests, storage,
 sensitive data exposure, and dependency risks.
 
+Implemented and verified:
+- Added defense-in-depth security headers via `next.config.ts` and
+  `src/lib/security/security-headers.ts`: CSP (production only), `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `object-src 'none'`.
+  Development policy omits CSP so Next dev HMR continues to work.
+- Created shared credential classifier `src/lib/security/sensitive.ts` used by history
+  persistence and code-snippet generation.
+- `history-store.ts` now strips sensitive query/header values, recursively redacts
+  credential-like fields inside JSON bodies, drops malformed bodies, and re-sanitizes
+  entries loaded from storage.
+- `use-history.ts` rewrites sanitized entries back to sessionStorage on first load so
+  legacy secrets are evicted.
+- `generate-code.ts` redacts sensitive headers, query parameters, and body fields in both
+  cURL and fetch snippets; malformed bodies are omitted.
+- Fixed `generateFetch` headers separator bug (was `.`, now `,`) and added syntactic
+  validity test.
+- `WorkbenchShell` logout now aborts in-flight requests and resets `busy`/`authBusy`.
+- Added regression tests for token non-persistence in history, logout abort, snippet
+  redaction, and TOTP key handling.
+- `bun audit`: no vulnerabilities found.
+
 Acceptance:
-- [ ] No obvious HIGH/CRITICAL security issues.
-- [ ] No secrets committed.
-- [ ] User-controlled values handled safely.
+- [x] No obvious HIGH/CRITICAL security issues.
+- [x] No secrets committed.
+- [x] User-controlled values handled safely.
+
+Independent reviewer verdict: APPROVED (0 CRITICAL/HIGH/MEDIUM findings after fixes).
 
 # Phase 8 — Final Verification
 

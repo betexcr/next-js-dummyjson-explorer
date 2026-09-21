@@ -6,10 +6,10 @@
 ## Current Status
 
 - **Project:** DummyJSON Workbench
-- **Phase:** Phase 7 — Production Hardening (TASK-037/038 done; next: TASK-039 security review)
+- **Phase:** Phase 8 — Final Verification (TASK-039 done; next: TASK-040 full automated verification)
 - **Status:** IN_PROGRESS
-- **Current Task:** TASK-039 — Security review
-- **Last Completed Task:** TASK-038 — Loading/performance hardening (approved by independent review)
+- **Current Task:** TASK-040 — Full automated verification
+- **Last Completed Task:** TASK-039 — Security review (approved by independent review)
 - **Blocked:** No
 - **Last Updated:** 2026-09-21
 
@@ -66,12 +66,13 @@ TASK-023's optional response-viewer body search is satisfied by native browser f
 | Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
-| Unit tests | PASS | 117 tests / 17 files, all passed |
-| Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
-| Playwright | PASS | 23 tests passed (chromium, port 3100, mocked transport) |
-| Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
-| API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
-| Final review | PENDING | Phase 8 |
+ | Unit tests | PASS | 140 tests / 20 files, all passed |
+ | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
+ | Playwright | PASS | 23 tests passed (chromium, port 3100, mocked transport) |
+ | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
+ | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
+ | Security review | PASS | Independent reviewer: APPROVED (0 CRITICAL/HIGH/MEDIUM findings) |
+ | Final review | PENDING | Phase 8 |
 
 Use `PASS`, `FAIL`, `PENDING`, or `BLOCKED`.
 
@@ -282,8 +283,34 @@ CHANGES:
 VERIFICATION: bun lint 0; bun run typecheck 0; bun run test 117/117; bun run build 0;
 bunx playwright test 23/23.
 RESULT: TASK-038 verified complete. Reviewer: APPROVED (0 CRITICAL/HIGH; MEDIUM on
-test timing acceptable). Commit created.
+  test timing acceptable). Commit created.
 NEXT TASK: TASK-039 security review.
+
+DATE: 2026-09-21 (this session)
+TASK: TASK-039 security review
+CHANGES:
+- Added `src/lib/security/security-headers.ts` + wired into `next.config.ts`:
+  production CSP with `object-src 'none'`, framing protection, nosniff, referrer,
+  permissions policies; development policy CSP-free for HMR.
+- Created shared `src/lib/security/sensitive.ts` credential classifier used by
+  history and code generation.
+- Hardened `src/features/history/history-store.ts`: strips sensitive query/header
+  values, recursively redacts sensitive JSON body fields, drops malformed bodies,
+  re-sanitizes entries loaded from storage.
+- `src/features/history/use-history.ts` rewrites sanitized entries back to
+  sessionStorage on first load to evict legacy secrets.
+- Hardened `src/components/request-builder/generate-code.ts`: redacts sensitive
+  headers, query params, and body fields in curl/fetch snippets; omits malformed
+  bodies; fixed headers separator bug (`.` -> `,`).
+- `src/components/workbench/WorkbenchShell.tsx`: logout aborts in-flight requests
+  and resets `busy`/`authBusy`.
+- Added security regression tests: token non-persistence in history, logout abort,
+  snippet redaction, TOTP key handling, syntactically valid fetch snippets.
+VERIFICATION: bun lint 0; bun run typecheck 0; bun run test 140/140; bun run build 0;
+bunx playwright test 23/23; bun audit: no vulnerabilities found.
+RESULT: TASK-039 verified complete. Independent reviewer: APPROVED
+  (0 CRITICAL/HIGH/MEDIUM findings after fixes).
+NEXT TASK: TASK-040 full automated verification.
 ```
 
 ## Continuation Instructions
@@ -336,10 +363,7 @@ Date: 2026-09-21
 
 ## Next Action
 
-TASK-039 — Security review: review token handling (sessionStorage Auth, bearer
-injection), request injection (untrusted values into URLs/downstream requests),
-unsafe URLs, XSS (raw JSON rendered as text via React text nodes; no dangerous inner
-HTML), storage (localStorage favorites, sessionStorage history — sanitized), sensitive
-data exposure (history sanitizeValues strips auth-like headers; generate-code must not
-leak tokens), and dependency risk (bun audit). Then TASK-040 full automated verification.
+TASK-040 — Full automated verification: run typecheck, lint, unit tests,
+integration tests, Playwright, production build, and API coverage. Then proceed to
+TASK-041 independent final review.
 

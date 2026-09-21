@@ -146,6 +146,37 @@ describe("WorkbenchShell", () => {
     ).toBeInTheDocument();
   });
 
+  it("does not persist the bearer token in history entries", async () => {
+    const user = userEvent.setup();
+    // Prime session storage with a signed-in session so the shell attaches
+    // the bearer token to outgoing requests.
+    sessionStorage.setItem(
+      "djwb.session",
+      JSON.stringify({
+        token: "access-token-123",
+        refreshToken: "refresh-token-456",
+        user: { id: 1, username: "emilys" },
+      }),
+    );
+    executeOperationMock.mockImplementation(async (_op, _values, options) => {
+      expect(options?.authToken).toBe("access-token-123");
+      return okResult();
+    });
+    render(<WorkbenchShell />);
+
+    await user.click(screen.getByRole("button", { name: itemName("products-list") }));
+    await user.click(screen.getByRole("button", { name: /^Send$/ }));
+    await screen.findByRole("status");
+
+    const historyCall = executeOperationMock.mock.calls.find(
+      ([op]) => op.id === "products-list",
+    );
+    expect(historyCall).toBeDefined();
+    // The values recorded in history must not contain the bearer token.
+    const recordedValues = historyCall![1];
+    expect(JSON.stringify(recordedValues)).not.toContain("access-token-123");
+  });
+
   it("restores a request from history", async () => {
     const user = userEvent.setup();
     executeOperationMock.mockResolvedValue(okResult());
@@ -217,5 +248,41 @@ describe("WorkbenchShell", () => {
     await user.click(screen.getByRole("button", { name: /Emily Johnson/ }));
     await user.click(screen.getByRole("button", { name: /Sign out/ }));
     expect(screen.getByRole("button", { name: /^Sign in$/ })).toBeInTheDocument();
+  });
+
+  it("aborts in-flight requests when signing out", async () => {
+    const user = userEvent.setup();
+    executeOperationMock.mockImplementation(async (op) =>
+      op.id === "auth-login" ? loginResult() : okResult(),
+    );
+    render(<WorkbenchShell />);
+    await user.click(screen.getByRole("button", { name: /^Sign in$/ }));
+    await user.click(screen.getByRole("button", { name: "Submit sign in" }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Emily Johnson/ }),
+      ).toBeInTheDocument();
+    });
+
+    // Start a request that never settles.
+    executeOperationMock.mockImplementation(
+      () =>
+        new Promise<ExecuteResult>(() => {
+          // Never resolves.
+        }),
+    );
+    await user.click(screen.getByRole("button", { name: itemName("products-list") }));
+    await user.click(screen.getByRole("button", { name: /^Send$/ }));
+    const signal = executeOperationMock.mock.calls.at(-1)?.[2]?.signal;
+    expect(signal).toBeDefined();
+    expect(signal?.aborted).toBe(false);
+
+    // Sign out must abort the in-flight request so the old token stops flying
+    // and reset loading states so the UI is not stuck.
+    await user.click(screen.getByRole("button", { name: /Emily Johnson/ }));
+    await user.click(screen.getByRole("button", { name: /Sign out/ }));
+    expect(signal?.aborted).toBe(true);
+    expect(screen.getByRole("button", { name: /^Send$/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Cancel$/ })).not.toBeInTheDocument();
   });
 });

@@ -226,6 +226,12 @@ export function WorkbenchShell() {
   }, []);
 
   const logout = useCallback(() => {
+    // Cancel any in-flight request that may still carry the old token and
+    // clear loading states so the UI never stays stuck after sign-out.
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setBusy(false);
+    setAuthBusy(false);
     saveAuth(null);
     setAuth(null);
     setAuthError(null);
