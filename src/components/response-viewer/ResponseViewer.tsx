@@ -39,6 +39,17 @@ function tryObjectUrl(buffer: ArrayBuffer): string | null {
   }
 }
 
+/** Renders the underlying cause of a network failure for display. */
+function formatErrorCause(cause: unknown): string {
+  if (cause instanceof Error && cause.message) return cause.message;
+  if (typeof cause === "string" && cause) return cause;
+  try {
+    return JSON.stringify(cause);
+  } catch {
+    return String(cause);
+  }
+}
+
 export function ResponseViewer({ result, op }: ResponseViewerProps) {
   const [tab, setTab] = useState<"body" | "headers">("body");
   const [view, setView] = useState<"tree" | "raw">("tree");
@@ -113,8 +124,8 @@ export function ResponseViewer({ result, op }: ResponseViewerProps) {
   if (!result.ok && result.error.type !== "http") {
     const { error } = result;
     const detail =
-      error.type === "network" && error.cause instanceof Error
-        ? error.cause.message
+      error.type === "network" && error.cause != null
+        ? formatErrorCause(error.cause)
         : error.type === "invalid-json" && error.raw.trim() !== ""
           ? error.raw.slice(0, 500)
           : null;

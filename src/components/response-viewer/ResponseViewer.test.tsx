@@ -77,6 +77,27 @@ describe("ResponseViewer", () => {
     expect(screen.getByText("boom")).toBeInTheDocument();
   });
 
+  it("renders network error detail for non-Error causes", () => {
+    render(
+      <ResponseViewer
+        result={{
+          ok: false,
+          error: {
+            type: "network",
+            message: "Failed to fetch",
+            cause: { code: "ECONNRESET", detail: "socket hang up" },
+          },
+        }}
+        op={products}
+      />,
+    );
+    expect(screen.getByText("network")).toBeInTheDocument();
+    // Stringified cause object detail is shown.
+    expect(
+      screen.getByText(JSON.stringify({ code: "ECONNRESET", detail: "socket hang up" })),
+    ).toBeInTheDocument();
+  });
+
   it("renders invalid-json errors with the truncated raw body", () => {
     const longRaw = "x".repeat(600);
     render(
