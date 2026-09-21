@@ -8,7 +8,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, Copy, ExternalLink, RotateCcw, Send, X } from "lucide-react";
 import type { ApiOperation, ParameterValues } from "@/lib/dummyjson/types";
-import { BODY_PARAM, buildRequest } from "@/lib/request/request-builder";
+import {
+  BODY_PARAM,
+  buildRequest,
+  USE_AUTH_ROUTE_PARAM,
+} from "@/lib/request/request-builder";
 import { DEFAULT_BASE_URL } from "@/lib/dummyjson/client";
 import { methodBadgeClass } from "@/components/navigation/OperationExplorer";
 import { BodyEditor } from "./BodyEditor";
@@ -98,6 +102,9 @@ export function RequestBuilder(props: RequestBuilderProps) {
 
   const bodyValue = (values[BODY_PARAM] as string | undefined) ?? "";
   const setBody = (next: string): void => setValue(BODY_PARAM, next);
+  const useAuthRoute = Boolean(values[USE_AUTH_ROUTE_PARAM]);
+  const setUseAuthRoute = (next: boolean): void =>
+    setValue(USE_AUTH_ROUTE_PARAM, next);
 
   // Building requests and serializing snippets is pure, so memoize per
   // operation + values instead of recomputing on every render. buildRequest
@@ -182,6 +189,25 @@ export function RequestBuilder(props: RequestBuilderProps) {
             ? "Authenticated — Authorization: Bearer token will be attached."
             : "This operation requires authentication. Sign in from the header first."}
         </p>
+      )}
+
+      {op.supportsAuthRoute && (
+        <div className="mx-4 mt-3 flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+          <input
+            id="use-auth-route"
+            type="checkbox"
+            checked={useAuthRoute}
+            onChange={(event) => setUseAuthRoute(event.target.checked)}
+            disabled={!authenticated}
+            className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+          />
+          <label
+            htmlFor="use-auth-route"
+            className={`text-xs ${authenticated ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"}`}
+          >
+            Use authenticated resource route ({`/auth${op.path}`})
+          </label>
+        </div>
       )}
 
       <div className="min-h-0 flex-1 space-y-5 p-4">

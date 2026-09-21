@@ -82,11 +82,13 @@ test("QA: keyboard can reach the operation search and a Send control", async ({
   page,
 }) => {
   await openWorkbench(page);
-  // Initial tab order: skip link, header link, history, sign-in, then search.
+  // Initial tab order: skip link, header link, settings, history, sign-in, then search.
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "DummyJSON Workbench" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Settings" })).toBeFocused();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
   await page.keyboard.press("Tab");
@@ -101,6 +103,7 @@ test("QA: keyboard can reach the operation search and a Send control", async ({
   await expect(page).toHaveURL(/\?op=products-search$/);
 
   // The Send control is reachable and triggers a request from the keyboard.
+  await page.getByLabel(/^q/).fill("phone");
   await page.getByRole("button", { name: /^Send$/ }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("status")).toContainText("200");

@@ -33,9 +33,9 @@ import {
   type HistoryEntry,
 } from "@/features/history/history-store";
 import { useHistory } from "@/features/history/use-history";
+import { SettingsMenu } from "@/features/settings/SettingsMenu";
+import { useSettings } from "@/features/settings/use-settings";
 import { useOperationParam } from "./use-operation-param";
-
-const REQUEST_TIMEOUT_MS = 30_000;
 
 export function WorkbenchShell() {
   const [opId, selectOpId] = useOperationParam();
@@ -50,6 +50,7 @@ export function WorkbenchShell() {
   const history = useHistory();
   const { append: appendHistory } = history;
   const favorites = useFavorites();
+  const { settings, update: updateSettings, reset: resetSettings } = useSettings();
 
   const abortRef = useRef<AbortController | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -125,7 +126,8 @@ export function WorkbenchShell() {
       const outcome = await executeOperation(op, requestValues, {
         authToken: auth?.token ?? null,
         signal: controller.signal,
-        timeoutMs: REQUEST_TIMEOUT_MS,
+        baseUrl: settings.baseUrl,
+        timeoutMs: settings.timeoutMs,
       });
 
       // Superseded by a newer request, cancel, or unmount.
@@ -149,7 +151,7 @@ export function WorkbenchShell() {
             : 0,
       });
     },
-    [auth?.token, appendHistory],
+    [auth?.token, appendHistory, settings.baseUrl, settings.timeoutMs],
   );
 
   const abort = useCallback(() => {
@@ -191,7 +193,8 @@ export function WorkbenchShell() {
 
     const outcome = await executeOperation(op, loginBody(credentials), {
       signal: controller.signal,
-      timeoutMs: REQUEST_TIMEOUT_MS,
+      baseUrl: settings.baseUrl,
+      timeoutMs: settings.timeoutMs,
     });
     if (controller.signal.aborted) return;
     setAuthBusy(false);
@@ -223,7 +226,7 @@ export function WorkbenchShell() {
     };
     saveAuth(stored);
     setAuth(stored);
-  }, []);
+  }, [settings.baseUrl, settings.timeoutMs]);
 
   const logout = useCallback(() => {
     // Cancel any in-flight request that may still carry the old token and
@@ -286,6 +289,11 @@ export function WorkbenchShell() {
           {OPERATIONS.length} endpoints
         </span>
         <div className="ml-auto flex items-center gap-2">
+          <SettingsMenu
+            settings={settings}
+            onUpdate={updateSettings}
+            onReset={resetSettings}
+          />
           <HistoryMenu
             entries={history.entries}
             onRestore={restore}

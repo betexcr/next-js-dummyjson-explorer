@@ -7,6 +7,7 @@ import {
   RequestBuildError,
   substitutePath,
   toUrl,
+  USE_AUTH_ROUTE_PARAM,
 } from "./request-builder";
 
 function opOf(id: string): ApiOperation {
@@ -102,6 +103,34 @@ describe("request builder: query and headers", () => {
     expect(built.query).toEqual([["select", "title"]]);
   });
 
+  it("throws for missing required query parameters", () => {
+    const op = opOf("products-search");
+    expect(() => buildRequest({ op, values: {} })).toThrowError(
+      /Missing required query parameter "q"/,
+    );
+    expect(() => buildRequest({ op, values: { q: "" } })).toThrowError(
+      /Missing required query parameter "q"/,
+    );
+  });
+
+  it("throws for missing required header parameters", () => {
+    const op: ApiOperation = {
+      ...opOf("products-list"),
+      parameters: [
+        {
+          name: "X-Required",
+          in: "header",
+          type: "string",
+          required: true,
+          description: "Required header",
+        },
+      ],
+    };
+    expect(() => buildRequest({ op, values: {} })).toThrowError(
+      /Missing required header parameter "X-Required"/,
+    );
+  });
+
   it("collects header parameters", () => {
     const op = opOf("auth-me"); // no header params, but builder must stay generic
     const built = buildRequest({ op, values: {} });
@@ -116,6 +145,28 @@ describe("request builder: query and headers", () => {
       basePath: "https://dummyjson.com",
     });
     expect(built.pathname).toBe("https://dummyjson.com/products/3");
+  });
+
+  it("prefixes the path with /auth when the authenticated route is selected", () => {
+    const op = opOf("products-get");
+    expect(op.supportsAuthRoute).toBe(true);
+    const built = buildRequest({
+      op,
+      values: { id: "3", [USE_AUTH_ROUTE_PARAM]: true },
+      basePath: "https://dummyjson.com",
+    });
+    expect(built.pathname).toBe("https://dummyjson.com/auth/products/3");
+  });
+
+  it("ignores the auth-route flag for non-resource operations", () => {
+    const op = opOf("auth-me");
+    expect(op.supportsAuthRoute).toBe(false);
+    const built = buildRequest({
+      op,
+      values: { [USE_AUTH_ROUTE_PARAM]: true },
+      basePath: "https://dummyjson.com",
+    });
+    expect(built.pathname).toBe("https://dummyjson.com/auth/me");
   });
 });
 

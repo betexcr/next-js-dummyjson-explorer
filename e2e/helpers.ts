@@ -148,20 +148,21 @@ export async function mockDummyJson(
       return;
     }
 
-    // Products.
-    if (url.pathname === "/products/search") {
+    // Products (including authenticated /auth/products variants).
+    const productsPath = url.pathname.replace(/^\/auth/, "");
+    if (productsPath === "/products/search") {
       await fulfillJson(route, searchBody);
       return;
     }
-    if (url.pathname === "/products/add" && method === "POST") {
+    if (productsPath === "/products/add" && method === "POST") {
       await fulfillJson(route, createdProductBody, 201);
       return;
     }
-    if (url.pathname === "/products" && method === "GET") {
+    if (productsPath === "/products" && method === "GET") {
       await fulfillJson(route, productsBody);
       return;
     }
-    const singleProduct = url.pathname.match(/^\/products\/(\d+)$/);
+    const singleProduct = productsPath.match(/^\/products\/(\d+)$/);
     if (singleProduct) {
       if (method === "GET") {
         await fulfillJson(route, singleProductBody);

@@ -51,3 +51,23 @@ test("logout: clears the session and returns to signed-out state", async ({
   await page.getByRole("button", { name: /Sign out/ }).click();
   await expect(page.getByRole("button", { name: /^Sign in$/ })).toBeVisible();
 });
+
+test("authenticated resource route: /auth/products is used when toggled", async ({
+  page,
+}) => {
+  const seen = await openWorkbench(page);
+  await page.getByRole("button", { name: /^Sign in$/ }).click();
+  await page.getByRole("button", { name: "Submit sign in" }).click();
+  await expect(page.getByRole("button", { name: /Emily Johnson/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "GET Get all products" }).click();
+  await page.getByLabel("Use authenticated resource route").check();
+  await page.getByRole("button", { name: /^Send$/ }).click();
+
+  await expect(page.getByRole("status")).toContainText("200");
+  const sent = seen.find(
+    (r) => r.method === "GET" && r.url.includes("/auth/products"),
+  );
+  expect(sent).toBeDefined();
+  expect(sent!.headers["authorization"]).toBe("Bearer access-token-123");
+});

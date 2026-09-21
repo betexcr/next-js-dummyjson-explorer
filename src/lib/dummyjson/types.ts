@@ -104,6 +104,8 @@ export interface ApiOperation {
   /** Link to the official documentation anchor, e.g. `https://dummyjson.com/docs/products#products-single`. */
   docsUrl: string;
   auth: AuthRequirement;
+  /** When true, the operation supports the documented `/auth/{path}` route for authenticated requests. */
+  supportsAuthRoute?: boolean;
   parameters?: ParameterDefinition[];
   requestBody?: BodySchema;
   responseKind?: ResponseKind;

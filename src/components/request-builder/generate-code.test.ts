@@ -72,7 +72,7 @@ describe("code generation", () => {
     expect(snippet).toContain('fetch("https://dummyjson.com/products/7", {');
     expect(snippet).toContain('method: "PUT"');
     expect(snippet).toContain('"Content-Type": "application/json"');
-    expect(snippet).toContain('body: {\n  "title": "Next"');
+    expect(snippet).toContain('body: "{\\"title\\":\\"Next\\"}"');
     expect(toUrl(built)).toContain("/products/7");
   });
 
@@ -87,6 +87,24 @@ describe("code generation", () => {
     // Parsing as a function body validates statement syntax without executing
     // any network call.
     expect(() => new Function(snippet)).not.toThrow();
+  });
+
+  it("produces a fetch body that can be passed to fetch()", () => {
+    const op = getOperation("products-update")!;
+    const built = buildRequest({
+      op,
+      values: { id: 7, [BODY_PARAM]: '{"title":"Next"}' },
+      basePath: "https://dummyjson.com",
+    });
+    const snippet = generateFetch(built);
+    // Extract the body expression and evaluate it to confirm it is a string.
+    const bodyLine = snippet.split("\n").find((line) => line.includes("body:"));
+    expect(bodyLine).toBeDefined();
+    const bodyMatch = bodyLine!.match(/body: (".*"),?$/);
+    expect(bodyMatch).not.toBeNull();
+    const bodyValue = new Function(`return ${bodyMatch![1]}`)();
+    expect(typeof bodyValue).toBe("string");
+    expect(JSON.parse(bodyValue)).toEqual({ title: "Next" });
   });
 
   it("does not include bearer tokens in generated snippets by default", () => {
@@ -161,8 +179,8 @@ describe("code generation", () => {
     expect(curl).not.toContain("JBSWY3DPEHPK3PXP");
     expect(fetchSnippet).not.toContain("JBSWY3DPEHPK3PXP");
     expect(curl).toContain('"key":"***REDACTED***"');
-    expect(fetchSnippet).toContain('"key": "***REDACTED***"');
-    expect(fetchSnippet).toContain('"algorithm": "SHA-1"');
+    expect(fetchSnippet).toContain('\\"key\\":\\"***REDACTED***\\"');
+    expect(fetchSnippet).toContain('\\"algorithm\\":\\"SHA-1\\"');
   });
 
   it("omits malformed request bodies from generated snippets", () => {

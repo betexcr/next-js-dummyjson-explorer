@@ -71,9 +71,9 @@ export function generateFetch(built: BuiltRequest): string {
     lines.push(`  headers: ${JSON.stringify(safe.headers, null, 2)},`);
   }
   if (safe.body !== undefined) {
-    // The builder only emits valid JSON for bodies; re-serialize it so the
-    // snippet is valid JS regardless of user formatting.
-    lines.push(`  body: ${JSON.stringify(JSON.parse(safe.body), null, 2)},`);
+    // The builder only emits valid JSON for bodies; emit a JSON.stringify call
+    // so the snippet is valid, runnable JavaScript.
+    lines.push(`  body: ${doubleQuote(safe.body)},`);
   }
   lines.push("});");
   return lines.join("\n");

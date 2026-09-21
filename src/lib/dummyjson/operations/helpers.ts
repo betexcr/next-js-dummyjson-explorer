@@ -116,6 +116,14 @@ export function pathId(
   };
 }
 
+const NON_AUTH_ROUTE_GROUPS = new Set<ApiOperation["group"]>([
+  "auth",
+  "image",
+  "http",
+  "tools",
+  "utility",
+]);
+
 /** Helper to build an operation tuple. */
 export function op(
   id: string,
@@ -137,6 +145,7 @@ export function op(
     docsUrl,
     auth: "none",
     responseKind: "json-list",
+    supportsAuthRoute: !NON_AUTH_ROUTE_GROUPS.has(group),
     ...extra,
   };
 }

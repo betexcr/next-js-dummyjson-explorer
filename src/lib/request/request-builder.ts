@@ -14,6 +14,7 @@ import type {
 
 /** Key carrying the raw JSON request body string. */
 export const BODY_PARAM = "__body";
+export const USE_AUTH_ROUTE_PARAM = "__useAuthRoute";
 
 export interface BuiltRequest {
   method: HttpMethod;
@@ -142,6 +143,23 @@ export interface BuildRequestInput {
   basePath?: string;
 }
 
+/** Throws when a required query or header parameter is empty. */
+function validateRequiredParameters(
+  op: ApiOperation,
+  values: ParameterValues,
+): void {
+  for (const param of op.parameters ?? []) {
+    if (param.in !== "query" && param.in !== "header") continue;
+    if (!param.required) continue;
+    const raw = values[param.name];
+    if (isValueEmpty(raw)) {
+      throw new RequestBuildError(
+        `Missing required ${param.in} parameter "${param.name}" for ${op.id}.`,
+      );
+    }
+  }
+}
+
 /**
  * Builds an executable request from registry metadata. Throws
  * `RequestBuildError` for invalid or unsupported inputs.
@@ -149,7 +167,11 @@ export interface BuildRequestInput {
 export function buildRequest(input: BuildRequestInput): BuiltRequest {
   const { op, values, basePath = "" } = input;
 
-  const pathname = substitutePath(op, values);
+  validateRequiredParameters(op, values);
+  const useAuthRoute = Boolean(values[USE_AUTH_ROUTE_PARAM]);
+  const effectivePath =
+    useAuthRoute && op.supportsAuthRoute ? `/auth${op.path}` : op.path;
+  const pathname = substitutePath({ ...op, path: effectivePath }, values);
   const query = buildQuery(op, values);
   const headers = buildHeaders(op, values);
 

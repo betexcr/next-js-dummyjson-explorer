@@ -66,13 +66,13 @@ TASK-023's optional response-viewer body search is satisfied by native browser f
 | Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
- | Unit tests | PASS | 140 tests / 20 files, all passed |
+ | Unit tests | PASS | 149 tests / 21 files, all passed |
  | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
- | Playwright | PASS | 23 tests passed (chromium, port 3100, mocked transport) |
+ | Playwright | PASS | 24 tests passed (chromium, port 3100, mocked transport) |
  | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
  | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
  | Security review | PASS | Independent reviewer: APPROVED (0 CRITICAL/HIGH/MEDIUM findings) |
- | Final review | PENDING | Phase 8 |
+ | Final review | IN_PROGRESS | Phase 8; first-pass HIGH findings fixed; verification green; reviewer re-run pending |
 
 Use `PASS`, `FAIL`, `PENDING`, or `BLOCKED`.
 
@@ -86,7 +86,8 @@ Completed groups (all 80 operations in `src/lib/dummyjson/operations/` + registr
 
 Pagination, selection, sorting, and delay are represented as reusable parameter
 metadata across operations. Authentication flows through `executeOperation` via the
-`authToken` option (Authorization: Bearer).
+`authToken` option (Authorization: Bearer). Resource operations support the
+authenticated `/auth/{path}` route via the `supportsAuthRoute` flag and a UI toggle.
 
 ## Current Blockers
 
@@ -324,6 +325,33 @@ VERIFICATION:
 - bun run test src/lib/dummyjson/coverage.test.ts: 5 passed, 0 failed
 RESULT: TASK-040 verified complete.
 NEXT TASK: TASK-041 independent final review.
+
+DATE: 2026-09-21 (this session)
+TASK: TASK-041 independent final review — HIGH finding fixes
+CHANGES:
+- Added `supportsAuthRoute` to `ApiOperation`; request builder applies `/auth/`
+  prefix when `USE_AUTH_ROUTE_PARAM` is true; UI toggle in RequestBuilder;
+  E2E regression test in `e2e/auth.spec.ts`; mock handles `/auth/products*`.
+- `buildRequest` validates required `query`/`header` parameters and throws
+  `RequestBuildError`; unit tests added.
+- `generate-code.ts` emits fetch body as `JSON.stringify(...)`; redaction remains
+  for sensitive headers/query/body fields; tests updated.
+- Added settings feature: persisted base URL + timeout (`settings-store.ts`,
+  `use-settings.ts`, `SettingsMenu.tsx`), wired into `WorkbenchShell` login and
+  request execution; unit tests added.
+- Fixed `SettingsMenu` lint error (setState in effect) by using uncontrolled refs.
+- Fixed `WorkbenchShell` useCallback dependency warnings for settings values.
+- Updated E2E keyboard tab-order test for new Settings button.
+VERIFICATION:
+- bun lint: exit 0
+- bun run typecheck: exit 0
+- bun run test: 149 passed, 0 failed (21 files)
+- bun run build: exit 0
+- bunx playwright test: 24 passed, 0 failed
+- bun run test src/lib/dummyjson/coverage.test.ts: 5 passed, 0 failed
+- bun audit: no vulnerabilities found
+RESULT: First-pass HIGH findings implemented and all verification green.
+NEXT: re-invoke independent reviewer for final assessment.
 ```
 
 ## Continuation Instructions
@@ -362,7 +390,7 @@ Result: exit 0
 Date: 2026-09-21
 
 Command: bun run test
-Result: 140 passed, 0 failed (20 files)
+Result: 149 passed, 0 failed (21 files)
 Date: 2026-09-21
 
 Command: bun run build
@@ -370,7 +398,7 @@ Result: exit 0 (routes: /, /_not-found)
 Date: 2026-09-21
 
 Command: bunx playwright test
-Result: 23 passed, 0 failed (6 spec files, chromium)
+Result: 24 passed, 0 failed (6 spec files, chromium)
 Date: 2026-09-21
 
 Command: bun run test src/lib/dummyjson/coverage.test.ts
@@ -380,8 +408,11 @@ Date: 2026-09-21
 
 ## Next Action
 
-TASK-041 — Independent final review: review architecture, API coverage,
-implementation quality, security, testing, UI, errors, and production readiness.
-Acceptance: no HIGH or CRITICAL findings; remaining MEDIUM findings fixed or
-documented.
+Re-invoke the independent reviewer for TASK-041 to confirm the first-pass HIGH
+findings are resolved and assess any remaining MEDIUM findings. Provide the
+reviewer with:
+- the files changed since TASK-039/TASK-040;
+- the verification evidence above;
+- the acceptance criteria (no HIGH/CRITICAL findings; MEDIUM findings fixed or
+documented).
 

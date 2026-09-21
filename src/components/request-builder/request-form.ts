@@ -5,14 +5,17 @@
  * back. They keep the React components lean and make the mapping
  * deterministic and unit-testable without a DOM.
  */
-import { BODY_PARAM } from "@/lib/request/request-builder";
+import {
+  BODY_PARAM,
+  USE_AUTH_ROUTE_PARAM,
+} from "@/lib/request/request-builder";
 import type {
   ApiOperation,
   ParameterDefinition,
   ParameterValues,
 } from "@/lib/dummyjson/types";
 
-export { BODY_PARAM };
+export { BODY_PARAM, USE_AUTH_ROUTE_PARAM };
 
 export interface GroupedParameters {
   path: ParameterDefinition[];
@@ -45,6 +48,9 @@ export function defaultParameterValues(op: ApiOperation): ParameterValues {
   }
   if (op.requestBody) {
     values[BODY_PARAM] = JSON.stringify(op.requestBody.example, null, 2);
+  }
+  if (op.supportsAuthRoute) {
+    values[USE_AUTH_ROUTE_PARAM] = false;
   }
   return values;
 }

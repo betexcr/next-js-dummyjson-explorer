@@ -560,15 +560,36 @@ Run the project's actual:
 - [x] API coverage — PASS (13 groups, 80 operations)
 
 ## TASK-041 — Independent final review
-Status: `[ ]`
+Status: `[~]`
 
 Review architecture, API coverage, implementation quality, security, testing, UI,
 errors, and production readiness.
+
+Implemented fixes for first-pass HIGH findings:
+- Authenticated resource routes: added `supportsAuthRoute` to `ApiOperation`,
+  `USE_AUTH_ROUTE_PARAM` (`__useAuthRoute`) in request builder, UI toggle in
+  `RequestBuilder`, E2E test, mock updates.
+- Required query/header validation: `buildRequest` throws `RequestBuildError` for
+  missing required `query`/`header` params; tests added.
+- Generated fetch snippets: body emitted as `JSON.stringify(...)` string.
+- Added API settings (base URL + timeout) with persisted store, hook, menu UI,
+  and unit tests; wired into login/execution.
+
+Verification after fixes:
+- lint — PASS
+- typecheck — PASS
+- unit tests — PASS (149 tests)
+- build — PASS
+- Playwright — PASS (24 tests)
+- API coverage — PASS (13 groups, 80 operations)
+- bun audit — no vulnerabilities
 
 Acceptance:
 - [ ] No HIGH findings.
 - [ ] No CRITICAL findings.
 - [ ] Remaining MEDIUM findings fixed or documented.
+
+Pending: independent reviewer re-run to confirm HIGH findings resolved.
 
 ## TASK-042 — Final diff inspection
 Status: `[ ]`
