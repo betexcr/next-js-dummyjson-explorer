@@ -190,4 +190,28 @@ describe("DummyJSON client", () => {
     if (result.ok) return;
     expect(result.error.type).toBe("network");
   });
+
+  it("surfaces invalid JSON response bodies as invalid-json errors", async () => {
+    // Regression: normalizeResponse throws a structured ApiError; the client
+    // must pass it through instead of re-labeling it as a network failure.
+    const fetchFn = vi.fn().mockResolvedValue(
+      new Response("{oops", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const result = await executeOperation(
+      getOperation("products-list")!,
+      {},
+      { baseUrl: "https://example.test", fetchFn },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.type).toBe("invalid-json");
+    if (result.error.type !== "invalid-json") return;
+    expect(result.error.message).toContain("not valid JSON");
+    expect(result.error.raw).toBe("{oops");
+  });
 });

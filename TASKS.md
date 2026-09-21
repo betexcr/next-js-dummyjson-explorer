@@ -288,112 +288,113 @@ Acceptance:
 # Phase 3 — Workbench UI
 
 ## TASK-020 — Application shell
-Status: `[~]`
+Status: `[x]`
 
 Create the main Workbench shell with navigation, operation browser, work area,
 request/response panels, responsive layout, loading, and errors.
 
 Acceptance:
-- [ ] Polished desktop experience.
-- [ ] Intentional responsive behavior.
-- [ ] Reasonable keyboard interaction.
-- [ ] No placeholder/demo-only UI.
+- [x] Polished desktop experience.
+- [x] Intentional responsive behavior.
+- [x] Reasonable keyboard interaction.
+- [x] No placeholder/demo-only UI.
 
 ## TASK-021 — Operation explorer
-Status: `[ ]`
+Status: `[x]`
 
 Create searchable/grouped operation navigation.
 
 Acceptance:
-- [ ] Groups derived from registry.
-- [ ] Search.
-- [ ] Selection reflected in URL/state where appropriate.
-- [ ] Empty state.
-- [ ] No silent registry/UI divergence.
+- [x] Groups derived from registry.
+- [x] Search.
+- [x] Selection reflected in URL/state where appropriate.
+- [x] Empty state.
+- [x] No silent registry/UI divergence.
 
 ## TASK-022 — Request builder UI
-Status: `[ ]`
+Status: `[x]`
 
 Create reusable request configuration UI.
 
 Acceptance:
-- [ ] Path parameters
-- [ ] Query parameters
-- [ ] Request body
-- [ ] Headers
-- [ ] Authentication
-- [ ] Send
-- [ ] Reset
-- [ ] Validation
-- [ ] Loading
-- [ ] Error states
+- [x] Path parameters
+- [x] Query parameters
+- [x] Request body
+- [x] Headers
+- [x] Authentication
+- [x] Send
+- [x] Reset
+- [x] Validation
+- [x] Loading
+- [x] Error states
 
 ## TASK-023 — Response viewer
-Status: `[ ]`
+Status: `[x]`
 
 Create a polished response inspection experience.
 
 Acceptance:
-- [ ] Status
-- [ ] Timing
-- [ ] Headers
-- [ ] JSON tree/raw view
-- [ ] Copy
-- [ ] Search where useful
-- [ ] Errors
-- [ ] Empty responses
-- [ ] Large response handling
+- [x] Status
+- [x] Timing
+- [x] Headers
+- [x] JSON tree/raw view
+- [x] Copy
+- [x] Search where useful (native Ctrl/Cmd+F covers the raw view; tree is a JSON
+  structure browser — see TASK-035 note)
+- [x] Errors
+- [x] Empty responses
+- [x] Large response handling
 
 ## TASK-024 — Request history
-Status: `[ ]`
+Status: `[x]`
 
 Implement bounded local request history.
 
 Acceptance:
-- [ ] Successful requests revisitable.
-- [ ] Request configuration restorable.
-- [ ] Secrets not exposed.
-- [ ] Reasonable limits.
-- [ ] Clear history.
+- [x] Successful requests revisitable.
+- [x] Request configuration restorable.
+- [x] Secrets not exposed.
+- [x] Reasonable limits.
+- [x] Clear history.
 
 ## TASK-025 — Examples and presets
-Status: `[ ]`
+Status: `[x]`
 
 Provide examples/presets based on actual documented API behavior.
 
 Acceptance:
-- [ ] Examples generated from registry definitions.
-- [ ] No fabricated endpoints.
-- [ ] Examples load into request builder.
-- [ ] Examples tested where practical.
+- [x] Examples generated from registry definitions.
+- [x] No fabricated endpoints.
+- [x] Examples load into request builder.
+- [x] Examples tested where practical.
 
 # Phase 4 — Cross-Cutting API Features
 
 ## TASK-026 — Pagination
-Status: `[ ]`
+Status: `[x]`
 Implement documented pagination behavior and controls where applicable.
 
 ## TASK-027 — Select / field selection
-Status: `[ ]`
+Status: `[x]`
 Implement documented field selection behavior and controls where applicable.
 
 ## TASK-028 — Sorting
-Status: `[ ]`
+Status: `[x]`
 Implement documented sorting behavior and controls where applicable.
 
 ## TASK-029 — Delay
-Status: `[ ]`
+Status: `[x]`
 Implement documented delay functionality and controls where applicable.
 
 ## TASK-030 — Authentication UX
-Status: `[ ]`
+Status: `[x]`
 
 Acceptance:
-- [ ] Login
-- [ ] Token state
-- [ ] Authenticated requests
-- [ ] Logout/reset
-- [ ] Sensitive values protected
+- [x] Login
+- [x] Token state
+- [x] Authenticated requests
+- [x] Logout/reset
+- [x] Sensitive values protected
 
 # Phase 5 — Testing and Coverage
 
@@ -421,39 +422,51 @@ Test registry → request builder → client → response processing, including 
 CRUD, auth, and error cases.
 
 ## TASK-034 — Playwright end-to-end tests
-Status: `[ ]`
+Status: `[x]`
 
 Cover:
-- [ ] Open Workbench
-- [ ] Find operation
-- [ ] Configure request
-- [ ] Send
-- [ ] Inspect response
-- [ ] Change operation
-- [ ] Pagination/options
-- [ ] Authentication
-- [ ] Error response
-- [ ] Request history
+- [x] Open Workbench
+- [x] Find operation
+- [x] Configure request
+- [x] Send
+- [x] Inspect response
+- [x] Change operation
+- [x] Pagination/options
+- [x] Authentication
+- [x] Error response
+- [x] Request history
 
 # Phase 6 — UI/UX Hardening
 
 ## TASK-035 — UI quality review
-Status: `[ ]`
+Status: `[x]`
 
 Review visual hierarchy, spacing, typography, responsiveness, empty/loading/error states,
 accessibility, keyboard interaction, consistency, and developer-tool density.
 
+Independent reviewer findings addressed: mobile operations drawer added (sidebar was
+unreachable below lg), icon-button target sizes enlarged (WCAG 2.5.8), secondary text
+contrast bumped (zinc-400 → zinc-500 where text), empty/loading/error states confirmed
+distinct, skip link added. Response-viewer body search intentionally satisfied by native
+browser find (raw view) — see STATE.md.
+
 ## TASK-036 — Accessibility hardening
-Status: `[ ]`
+Status: `[x]`
 
 Acceptance:
-- [ ] Keyboard navigation.
-- [ ] Accessible form labels.
-- [ ] Visible focus.
-- [ ] Accessible dialogs/popovers.
-- [ ] Useful error communication.
-- [ ] Acceptable contrast.
-- [ ] Reasonable screen-reader semantics.
+- [x] Keyboard navigation.
+- [x] Accessible form labels.
+- [x] Visible focus.
+- [x] Accessible dialogs/popovers.
+- [x] Useful error communication.
+- [x] Acceptable contrast.
+- [x] Reasonable screen-reader semantics.
+
+Details: skip link (2.4.1), prefers-reduced-motion (2.3.3), dialog pattern for mobile
+drawer + focus trap/Escape/restore for header menus, aria-describedby on body editor,
+search aria-controls/status linkage, tablist/tabpanel wiring, dropped misleading
+`role="tree"` on the JSON tree (native details/summary disclosures), copy feedback
+live regions, placeholder contrast (light zinc-500 / dark zinc-400).
 
 # Phase 7 — Production Hardening
 

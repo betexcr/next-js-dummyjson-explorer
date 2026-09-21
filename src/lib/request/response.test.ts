@@ -77,6 +77,26 @@ describe("response processing", () => {
     ).rejects.toMatchObject({ type: "invalid-json" });
   });
 
+  it("keeps HTTP error responses as text when their JSON body is malformed", async () => {
+    const response = new Response("{oops", {
+      status: 500,
+      statusText: "Internal Server Error",
+      headers: { "content-type": "application/json" },
+    });
+    const normalized = await normalizeResponse({
+      response,
+      durationMs: 1,
+    });
+    expect(normalized.ok).toBe(false);
+    expect(normalized.status).toBe(500);
+    expect(normalized.kind).toBe("text");
+    expect(normalized.raw).toBe("{oops");
+    // httpError() still carries the status, not an invalid-json error.
+    const error = httpError(normalized);
+    if (error.type !== "http") throw new Error("expected http error");
+    expect(error.status).toBe(500);
+  });
+
   it("converts headers to a plain record", () => {
     const record = headersToRecord(
       new Headers({ "x-one": "1", "x-two": "2" }),

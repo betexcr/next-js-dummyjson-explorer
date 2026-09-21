@@ -10,7 +10,9 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "node",
+    // Component/store tests need a DOM. Pure lib tests tolerate jsdom too,
+    // so a single environment keeps results deterministic.
+    environment: "jsdom",
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],

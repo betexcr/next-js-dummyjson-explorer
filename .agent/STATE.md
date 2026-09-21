@@ -6,12 +6,12 @@
 ## Current Status
 
 - **Project:** DummyJSON Workbench
-- **Phase:** Phase 3 — Workbench UI (TASK-020 through TASK-025)
+- **Phase:** Phase 6/7 — Hardening (TASK-035/036 done; next: TASK-037 error handling)
 - **Status:** IN_PROGRESS
-- **Current Task:** TASK-020 — Application shell (workbench layout, navigation, request/response panels)
-- **Last Completed Task:** TASK-019 — Response processing (Phase 2 complete: client, request builder, response pipeline)
+- **Current Task:** TASK-037 — Error handling review
+- **Last Completed Task:** TASK-035/036 — UI quality review + accessibility hardening (WCAG 2.2 AA pass)
 - **Blocked:** No
-- **Last Updated:** 2026-09-20
+- **Last Updated:** 2026-09-21
 
 ## Mission
 
@@ -41,21 +41,35 @@ polished, developer-facing API workbench.
 
 ## Current Work
 
-Completed work is tracked in `TASKS.md`. Phase 0, Phase 1 (registry + all 12 operation
-groups), and Phase 2 (client, request builder, response processing) are complete and
-verified. Phase 3 UI is in progress.
+Completed and verified: Phase 0 (foundation), Phase 1 (registry + all 12 operation
+groups, 80 operations), Phase 2 (client, request builder, response processing),
+Phase 3 (Workbench UI: shell, explorer, request builder, response viewer, history,
+examples), Phase 4 (pagination/select/sort/delay/auth UX), TASK-031/032/033 (registry
+coverage, unit suite, integration), TASK-034 (Playwright E2E, 21 tests).
+
+The full workbench UI was implemented in the previous session and is present as
+uncommitted changes. Two verification + hardening batches have been applied since:
+one fixing the E2E transport (hydration via `allowedDevOrigins`), the request-builder
+snippet crash, the auth panel UX + token leak, the select-param control, and E2E
+assertion correctness; and this batch adding WCAG 2.2 AA hardening (skip link,
+reduced-motion, mobile drawer, focus management, ARIA wiring, contrast, target sizes)
+plus a mobile-drawer regression test. All verification is green.
+
+Remaining: TASK-037 (error handling), TASK-038 (loading/performance), TASK-039 (security
+review), TASK-040-043 (final verification + report). TASK-023's optional response-viewer
+body search is satisfied by native browser find (documented in TASK-035).
 
 ## Repository Health
 
 | Check | Status | Notes |
 |---|---|---|
-| Dependencies | PASS | bun install clean, bun 1.3.14 |
+| Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
-| Unit tests | PASS | 51 tests / 6 files exit 0 |
+| Unit tests | PASS | 108 tests / 16 files, all passed |
 | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
-| Playwright | PENDING | config present; suite written in TASK-034 |
-| Production build | PASS | `bun run build` exit 0, Next.js 16.3.5 |
+| Playwright | PASS | 21 tests passed (chromium, port 3100, mocked transport) |
+| Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
 | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
 | Final review | PENDING | Phase 8 |
 
@@ -71,7 +85,7 @@ Completed groups (all 80 operations in `src/lib/dummyjson/operations/` + registr
 
 Pagination, selection, sorting, and delay are represented as reusable parameter
 metadata across operations. Authentication flows through `executeOperation` via the
-`accessToken` option (Authorization: Bearer).
+`authToken` option (Authorization: Bearer).
 
 ## Current Blockers
 
@@ -100,11 +114,79 @@ DATE: 2026-09-20
 DECISION: Request body is represented in the typed registry via a sentinel parameter
 `BODY_PARAM = "__body"` (exported from request-builder and re-exported by client),
 mapped by `execParams` in the execute path. Client `executeOperation` options accept
-`{ accessToken, baseUrl?, timeoutMs?, signal? }`.
+`{ authToken, baseUrl?, timeoutMs?, signal?, fetchFn? }`.
 REASON: Registry-driven request building needs body payloads to be declarative data,
 not code (ARCHITECTURE.md: UI renders from capability metadata).
 ALTERNATIVES CONSIDERED: hardcoded body schema per operation (rejected: duplication).
 IMPACT: request-builder serializes BODY_PARAM to JSON; tests cover body operations.
+
+DATE: 2026-09-21
+DECISION: `next.config.ts` sets `allowedDevOrigins: ["127.0.0.1", "localhost"]`.
+REASON: Next 16 dev blocks HMR/dev bootstrap for cross-origin hosts; Playwright drives
+http://127.0.0.1:3100 while Next advertises localhost, which left E2E pages
+non-interactive (unhydrated) until this was allowed.
+ALTERNATIVES CONSIDERED: switching Playwright to localhost (rejected: address is the
+stable loopback target; both origins allowed so humans and CI behave identically).
+IMPACT: hydration verified (React fibers + HMR connected); E2E suite green.
+
+DATE: 2026-09-21
+DECISION: Request builder error is communicated via a `<div role="alert" aria-label={message}>`.
+REASON: The ARIA `alert` role supports author-supplied names only; Chromium reports an
+empty accessible name for content-named alerts, so `getByRole("alert", { name })`
+(and screen-reader labeling) needs the explicit label. Independent reviewer suggested
+removing the label as "redundant" — rejected: removing it regresses the verified E2E
+validation test and AT naming.
+ALTERNATIVES CONSIDERED: keeping `<p role="alert">` (rejected: no queryable name).
+IMPACT: validation E2E passes; alert is properly named for AT.
+
+DATE: 2026-09-21
+DECISION: AuthMenu closes its panel when a session starts and no longer renders the
+raw bearer token in the UI.
+REASON: E2E logout flow clicks the user button to reopen the panel (a stayed-open
+panel broke the toggle); displaying a token excerpt leaks the credential into the DOM.
+ALTERNATIVES CONSIDERED: keeping the panel open and disclosing the token (rejected:
+logout UX broken + token exposure).
+IMPACT: logout works; auth E2E asserts zero `access-token-123` matches in the UI.
+
+DATE: 2026-09-21
+DECISION: Registry `select` parameters render as text inputs (ParamField), not
+`<select>` dropdowns.
+REASON: DummyJSON's `select` accepts free-form comma-separated field lists; the
+registry declares it without options. Only `enum` params (e.g. order asc/desc) are
+fixed-choice selects.
+ALTERNATIVES CONSIDERED: rendering a dropdown of known fields per resource (rejected:
+invented constraints; API accepts arbitrary fields).
+IMPACT: selecting fields works; E2E config test round-trips `select=title,price`.
+
+DATE: 2026-09-21
+DECISION: `RequestBuilder.toCode()` falls back tier-by-tier (current values ->
+documented defaults -> placeholder comments) so snippet rendering never throws for
+operations whose required path parameters are empty.
+REASON: `buildRequest` throws `RequestBuildError` on missing required params; the old
+fallback re-threw the same error during render, breaking the whole builder panel for
+every operation with a required path parameter without a default.
+IMPACT: panel renders for all 80 operations; regression unit test added.
+
+DATE: 2026-09-21
+DECISION: WCAG 2.2 AA hardening pass (TASK-035/036): skip link, reduced-motion media
+query, mobile operations drawer (role=dialog + focus trap + Escape + focus restore),
+Escape-to-close + focus management for Auth/History menus, aria-describedby linking
+body-editor errors, search aria-controls/status linkage, tablist/tabpanel ARIA wiring,
+dropped misleading `role="tree"` on the JSON tree (native <details>/<summary> are
+keyboard-accessible disclosures), copy feedback via sr-only live regions, icon button
+target sizes >= 24px, text contrast bumps (light zinc-500 / dark zinc-400 placeholders).
+REASON: WCAG 2.1 keyboard/name/contrast + 2.2 target-size/dialog criteria.
+ALTERNATIVES CONSIDERED: full ARIA tree pattern on JSON tree (rejected: overkill for a
+read-only response browser); focus-trap lib (rejected: dependency not justified).
+IMPACT: lint/typecheck 0, 108 unit tests, build 0, 21 E2E green. E2E QA tab-order test
+now asserts the skip link is the first focusable element.
+
+NOTE: Auth/history/favorites hydrate from sessionStorage/localStorage via lazy
+`useState` initializers (repo convention). A stored session can in principle produce
+a recoverable React hydration mismatch on refresh (client first render differs from
+the prerendered signed-out markup). No test exercises a reload with a stored session;
+the E2E QA test asserts zero console errors in fresh contexts. Revisit in TASK-039 if
+desired; do NOT reintroduce effect-setState (react-hooks/set-state-in-effect lint).
 ```
 
 ## Recent Work
@@ -114,17 +196,60 @@ DATE: 2026-09-20
 TASK: TASK-001..019, TASK-031..033 (Phase 0, 1, 2 foundation)
 CHANGES: reconciliation of all operation files + registry + schemas + client +
 request-builder + response processing + minimal app shell + full test suite.
-VERIFICATION: typecheck/lint/tests(51)/build all exit 0.
+VERIFICATION: typecheck/lint/tests/build all exit 0.
 RESULT: Phase 0-2 verified complete; API coverage 80/80.
-NEXT TASK: TASK-020 Application shell.
 
 DATE: 2026-09-20
 TASK: Repo hygiene + checkpoint
-CHANGES: .gitignore now excludes harness artifacts (.opencode/, .scripts/,
-dummyjson-autonomous-state-files.zip, .vite, *.tsbuildinfo); TASKS.md statuses
-reconciled with verified reality; STATE.md rewritten.
+CHANGES: .gitignore now excludes harness artifacts; TASKS.md statuses reconciled;
+STATE.md rewritten; initial checkpoint commit created.
 VERIFICATION: git status clean of harness junk.
-RESULT: initial checkpoint commit created.
+RESULT: checkpoint commit.
+
+DATE: 2026-09-20 (previous session, uncommitted)
+TASK: TASK-020..030, TASK-034 (Phase 3 UI + Phase 4 features + E2E suite)
+CHANGES: WorkbenchShell/OperationExplorer/RequestBuilder/ParamField/BodyEditor/
+ResponseViewer/JsonTree + history/favorites/auth UX wired to `/`; E2E suite authored.
+RESULT: UI implemented; E2E initially blocked by hydration + UI bugs.
+
+DATE: 2026-09-21 (this session)
+TASK: TASK-034 proof-of-pass + review fixes
+CHANGES: (see DATE 2026-09-21 decisions 1-5 and previous Recent Work entry)
+VERIFICATION: bun lint 0; bun run typecheck 0; bun test 107/107; bun run build ok;
+bunx playwright test 21/21.
+RESULT: Phase 3 + Phase 4 + TASK-034 verified.
+
+DATE: 2026-09-21 (this session)
+TASK: TASK-035 UI quality review + TASK-036 accessibility hardening
+CHANGES:
+- layout.tsx: WCAG 2.4.1 skip link (first focusable, focus-only visible).
+- globals.css: prefers-reduced-motion kill-switch for transitions/animations.
+- WorkbenchShell: main landmark id for skip target; header Menu toggle (lg:hidden);
+  mobile operations drawer (role=dialog aria-modal, focused on open, Tab trap,
+  Escape closes, focus restored on close); selection closes drawer.
+- OperationExplorer: search aria-controls + status id; placeholder contrast
+  (zinc-500/zinc-400); kept expanded + hidden collapsed group lists (aria-controls
+  now always points at a real element); star button p-1.5 + zinc-500 contrast;
+  count spans zinc-500.
+- RequestBuilder: sr-only h1 operation name; loading live region; copy feedback
+  sr-only live region; copy button target height; alert aria-label documented
+  (deliberate, see decision log).
+- BodyEditor: textarea aria-describedby="body-error".
+- ResponseViewer: tablist/tabpanel aria-controls + aria-labelledby; copy live region;
+  empty-state contrast zinc-500.
+- JsonTree: removed role="tree" (native details/summary are keyboard disclosures);
+  summary labels zinc-500.
+- AuthMenu/HistoryMenu: Escape-to-close, focus first control on open, restore focus
+  to trigger on close, aria-haspopup="dialog"; target sizes; zinc-500 secondary text.
+- Tests: ResponseViewer tree assertions updated to details/summary semantics;
+  E2E QA tab-order asserts skip link first; WorkbenchShell mobile-drawer regression
+  test added (108 unit tests now).
+VERIFICATION: bun lint 0; bun run typecheck 0; bun run test 108/108; bun run build 0;
+bunx playwright test 21/21.
+RESULT: TASK-035/036 verified complete. Reviewer findings triaged: all actionable
+items fixed; declined alert aria-label removal and BinaryPreview alt change (see
+decision log).
+NEXT TASK: TASK-037 error handling review.
 ```
 
 ## Continuation Instructions
@@ -154,26 +279,31 @@ and `.agent/FINAL_REPORT.md` exists.
 ## Last Known Good Verification
 
 ```text
-Command: bun typecheck
-Result: exit 0
-Date: 2026-09-20
-
 Command: bun lint
 Result: exit 0
-Date: 2026-09-20
+Date: 2026-09-21
 
-Command: bun test
-Result: 51 passed, 0 failed (6 files)
-Date: 2026-09-20
+Command: bun run typecheck
+Result: exit 0
+Date: 2026-09-21
+
+Command: bun run test
+Result: 108 passed, 0 failed (16 files)
+Date: 2026-09-21
 
 Command: bun run build
 Result: exit 0 (routes: /, /_not-found)
-Date: 2026-09-20
+Date: 2026-09-21
+
+Command: bunx playwright test
+Result: 21 passed, 0 failed (6 spec files, chromium)
+Date: 2026-09-21
 ```
 
 ## Next Action
 
-Implement TASK-020 — the Workbench application shell. Build `src/components/workbench/`
-components (explorer/sidebar with registry-driven groups + search, request panel, response
-panel) wired into `src/app/page.tsx` with URL-synced operation selection, then
-TASK-021/022/023, followed by unit tests for the UI logic and state, then checkpoints.
+TASK-037 � Error handling review. Verify network/HTTP/validation/malformed-response/
+timeout-cancellation/unexpected error paths end-to-end (client, ResponseViewer,
+RequestBuilder banner, auth errors), confirm E2E coverage of network + HTTP failures,
+then TASK-038 (loading/performance) and TASK-039 (security review).
+

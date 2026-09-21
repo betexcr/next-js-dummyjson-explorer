@@ -1,0 +1,68 @@
+/**
+ * Bounded local request history (TASK-024).
+ *
+ * Pure store helpers: add/evict/serialize/deserialize plus value sanitizing
+ * so secrets (Authorization headers, bearer-style strings) are never
+ * persisted.
+ */
+import type { ParameterValues } from "@/lib/dummyjson/types";
+
+export const HISTORY_STORAGE_KEY = "djwb.history";
+export const MAX_HISTORY_ENTRIES = 100;
+
+export interface HistoryEntry {
+  id: string;
+  timestamp: number;
+  operationId: string;
+  values: ParameterValues;
+  ok: boolean;
+  status: number | null;
+  durationMs: number;
+}
+
+const SENSITIVE_KEYS = /^(authorization|bearer|proxy-authorization|x-api-key)$/i;
+
+/** Redacts request values that carry credentials. */
+export function sanitizeValues(values: ParameterValues): ParameterValues {
+  const out: ParameterValues = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (SENSITIVE_KEYS.test(key)) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/** Prepends an entry and evicts old entries beyond the bound. */
+export function addEntry(
+  entries: HistoryEntry[],
+  entry: HistoryEntry,
+): HistoryEntry[] {
+  return [entry, ...entries].slice(0, MAX_HISTORY_ENTRIES);
+}
+
+function isHistoryEntry(value: unknown): value is HistoryEntry {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Partial<HistoryEntry>;
+  return (
+    typeof record.id === "string" &&
+    typeof record.timestamp === "number" &&
+    typeof record.operationId === "string" &&
+    typeof record.values === "object" &&
+    record.values !== null &&
+    typeof record.ok === "boolean" &&
+    (record.status === null || typeof record.status === "number") &&
+    typeof record.durationMs === "number"
+  );
+}
+
+/** Loads and validates entries from a raw localStorage payload. */
+export function loadHistory(raw: string | null): HistoryEntry[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isHistoryEntry);
+  } catch {
+    return [];
+  }
+}

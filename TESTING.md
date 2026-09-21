@@ -48,7 +48,11 @@ The default suite must not depend on DummyJSON uptime.
 Use mocked HTTP for deterministic tests.
 
 An opt-in live smoke mode may exist:
-`LIVE_API_TESTS=1 bun test`
+`LIVE_API_TESTS=1 bun run test`
+
+> Note: the canonical test command is `bun run test` (runs `vitest run`).
+> Component tests opt into the jsdom environment via `vitest.config.ts`
+> (`environmentMatchGlobs`), which Bun's native `bun test` runner does not honor.
 
 ## Coverage
 

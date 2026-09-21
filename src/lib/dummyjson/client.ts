@@ -9,6 +9,7 @@ import { buildRequest, BODY_PARAM, toUrl } from "@/lib/request/request-builder";
 import {
   type ApiError,
   httpError,
+  isApiError,
   type NormalizedResponse,
   normalizeResponse,
 } from "@/lib/request/response";
@@ -140,7 +141,10 @@ export async function executeOperation(
     }
     return { ok: true, response: normalized };
   } catch (cause) {
-    return { ok: false, error: toError(cause, timedOut) };
+    // Structured ApiError throws (e.g. invalid JSON bodies from
+    // normalizeResponse) must surface as-is instead of being re-labeled as
+    // generic network failures.
+    return { ok: false, error: isApiError(cause) ? cause : toError(cause, timedOut) };
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }

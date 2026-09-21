@@ -32,11 +32,29 @@ export type ApiError =
       type: "http";
       status: number;
       statusText: string;
+      headers: Record<string, string>;
       body: unknown;
+      raw: string;
+      kind: ResponseBodyKind;
+      durationMs: number;
       message: string;
     }
   | { type: "invalid-json"; message: string; raw: string }
   | { type: "validation"; message: string; issues: unknown[] };
+
+/** True when `value` is a structured ApiError (e.g. thrown by a helper). */
+export function isApiError(value: unknown): value is ApiError {
+  if (typeof value !== "object" || value === null) return false;
+  const type = (value as { type?: unknown }).type;
+  return (
+    type === "network" ||
+    type === "timeout" ||
+    type === "aborted" ||
+    type === "http" ||
+    type === "invalid-json" ||
+    type === "validation"
+  );
+}
 
 /** Reads a `Headers` instance into a plain record. */
 export function headersToRecord(headers: Headers): Record<string, string> {
@@ -108,11 +126,19 @@ export async function normalizeResponse(
       try {
         body = JSON.parse(raw) as unknown;
       } catch {
-        throw {
-          type: "invalid-json",
-          message: "Response body is not valid JSON.",
-          raw,
-        } satisfies ApiError;
+        // A successful response with a malformed JSON body is a transport
+        // problem. For HTTP error responses the status/statusText are the
+        // primary signal, so fall back to raw text instead of masking them
+        // with an invalid-json error.
+        if (!response.ok) {
+          kind = "text";
+        } else {
+          throw {
+            type: "invalid-json",
+            message: "Response body is not valid JSON.",
+            raw,
+          } satisfies ApiError;
+        }
       }
     }
   }
@@ -137,7 +163,11 @@ export function httpError(
     type: "http",
     status: response.status,
     statusText: response.statusText,
+    headers: response.headers,
     body: response.body,
+    raw: response.raw,
+    kind: response.kind,
+    durationMs: response.durationMs,
     message: summarizeHttpError(
       response.status,
       response.statusText,
