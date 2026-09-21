@@ -491,9 +491,25 @@ Implemented and verified:
 - Independent reviewer verdict: APPROVED (0 CRITICAL/HIGH; MEDIUM on non-Error causes fixed).
 
 ## TASK-038 — Loading/performance hardening
-Status: `[ ]`
+Status: `[x]`
 Avoid unnecessary requests/renders, keep large responses usable, keep explorer responsive,
 bound history, and address obvious leaks.
+
+Implemented and verified:
+- WorkbenchShell unmount cleanup now aborts the in-flight request (previously captured
+  the mount-time controller, i.e. null, leaking fetches). + regression test.
+- RequestBuilder code-snippet generation memoized per `op+values` (was rebuilt every render);
+  CodeBlock copy-feedback timer cleared on unmount.
+- ResponseViewer `rawText`/`formatJson` memoized per response (avoids re-running
+  `JSON.stringify` on every tab/view/copy state change); copy timer cleared on unmount;
+  download blob URL revocation deferred via `setTimeout(..., 0)` after `anchor.click()`.
+- JsonTree: `MAX_TREE_DEPTH = 32` cap so pathologically deep echoed bodies render a
+  truncation marker instead of overflowing the call stack. + unit tests.
+- Other criteria already satisfied: OperationExplorer search memoized (useMemo on query),
+  history bounded at 100 entries with eviction test, `LARGE_RESPONSE_THRESHOLD` disables
+  tree view for >1 MB raw responses.
+- Independent reviewer verdict: APPROVED (0 CRITICAL/HIGH; one MEDIUM on test timing
+  acceptable for a regression test).
 
 ## TASK-039 — Security review
 Status: `[ ]`

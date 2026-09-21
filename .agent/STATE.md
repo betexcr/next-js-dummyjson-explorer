@@ -6,10 +6,10 @@
 ## Current Status
 
 - **Project:** DummyJSON Workbench
-- **Phase:** Phase 7 — Production Hardening (TASK-037 error handling done; next: TASK-038 loading/performance)
+- **Phase:** Phase 7 — Production Hardening (TASK-037/038 done; next: TASK-039 security review)
 - **Status:** IN_PROGRESS
-- **Current Task:** TASK-038 — Loading/performance hardening
-- **Last Completed Task:** TASK-037 — Error handling (approved by independent review)
+- **Current Task:** TASK-039 — Security review
+- **Last Completed Task:** TASK-038 — Loading/performance hardening (approved by independent review)
 - **Blocked:** No
 - **Last Updated:** 2026-09-21
 
@@ -55,9 +55,9 @@ assertion correctness; and this batch adding WCAG 2.2 AA hardening (skip link,
 reduced-motion, mobile drawer, focus management, ARIA wiring, contrast, target sizes)
 plus a mobile-drawer regression test. All verification is green.
 
-Remaining: TASK-038 (loading/performance), TASK-039 (security review), TASK-040-043
-(final verification + report). TASK-023's optional response-viewer body search is
-satisfied by native browser find (documented in TASK-035).
+Remaining: TASK-039 (security review), TASK-040-043 (final verification + report).
+TASK-023's optional response-viewer body search is satisfied by native browser find
+(documented in TASK-035).
 
 ## Repository Health
 
@@ -66,7 +66,7 @@ satisfied by native browser find (documented in TASK-035).
 | Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
-| Unit tests | PASS | 113 tests / 16 files, all passed |
+| Unit tests | PASS | 117 tests / 17 files, all passed |
 | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
 | Playwright | PASS | 23 tests passed (chromium, port 3100, mocked transport) |
 | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
@@ -270,6 +270,20 @@ RESULT: TASK-037 verified complete. Independent reviewer: APPROVED (0 CRITICAL/H
   2 MEDIUM — non-Error cause detail fixed; cancel-suppresses-aborted is deliberate
   UX, documented in TASKS.md).
 NEXT TASK: TASK-038 loading/performance hardening.
+DATE: 2026-09-21 (this session)
+TASK: TASK-038 loading/performance hardening
+CHANGES:
+- WorkbenchShell: unmount cleanup aborts in-flight request (old code captured
+  mount-time controller = null, leaking fetches) + regression test.
+- RequestBuilder: snippets memoized per op+values; CodeBlock timer cleared.
+- ResponseViewer: rawText/formatJson memoized per response; copy timer cleared;
+  download blob URL revoke deferred past anchor.click().
+- JsonTree: MAX_TREE_DEPTH=32 cap + tests (deep echoed bodies don't blow stack).
+VERIFICATION: bun lint 0; bun run typecheck 0; bun run test 117/117; bun run build 0;
+bunx playwright test 23/23.
+RESULT: TASK-038 verified complete. Reviewer: APPROVED (0 CRITICAL/HIGH; MEDIUM on
+test timing acceptable). Commit created.
+NEXT TASK: TASK-039 security review.
 ```
 
 ## Continuation Instructions
@@ -308,7 +322,7 @@ Result: exit 0
 Date: 2026-09-21
 
 Command: bun run test
-Result: 113 passed, 0 failed (16 files)
+Result: 117 passed, 0 failed (17 files)
 Date: 2026-09-21
 
 Command: bun run build
@@ -322,9 +336,10 @@ Date: 2026-09-21
 
 ## Next Action
 
-TASK-038 — Loading/performance hardening: avoid unnecessary requests/renders, keep
-large responses usable (LARGE_RESPONSE_THRESHOLD exists in format-json; verify), keep
-the explorer responsive (memoized search), bound history (already 100 entries), and
-address obvious leaks (object URLs revoked, timers cleared — audit). Then TASK-039
-(security review).
+TASK-039 — Security review: review token handling (sessionStorage Auth, bearer
+injection), request injection (untrusted values into URLs/downstream requests),
+unsafe URLs, XSS (raw JSON rendered as text via React text nodes; no dangerous inner
+HTML), storage (localStorage favorites, sessionStorage history — sanitized), sensitive
+data exposure (history sanitizeValues strips auth-like headers; generate-code must not
+leak tokens), and dependency risk (bun audit). Then TASK-040 full automated verification.
 
