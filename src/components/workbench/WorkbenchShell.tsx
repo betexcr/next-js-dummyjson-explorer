@@ -55,9 +55,12 @@ export function WorkbenchShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const mobileNavRef = useRef<HTMLDivElement | null>(null);
 
+  // Abort any in-flight request when the shell unmounts. The cleanup reads
+  // `abortRef.current` lazily so it always aborts the request that is actually
+  // running at unmount time (capturing it in the effect body would seal in the
+  // mount-time value, i.e. null).
   useEffect(() => {
-    const controller = abortRef.current;
-    return () => controller?.abort();
+    return () => abortRef.current?.abort();
   }, []);
 
   // Mobile navigation drawer: focus it on open, trap Tab, close on Escape,

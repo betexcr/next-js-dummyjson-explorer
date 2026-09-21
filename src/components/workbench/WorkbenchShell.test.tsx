@@ -177,6 +177,29 @@ describe("WorkbenchShell", () => {
     });
   });
 
+  it("aborts an in-flight request when it unmounts", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<WorkbenchShell />);
+    await user.click(screen.getByRole("button", { name: itemName("products-list") }));
+
+    // A request that never settles simulates an in-flight fetch.
+    executeOperationMock.mockImplementation(
+      () =>
+        new Promise<ExecuteResult>(() => {
+          // Never resolves.
+        }),
+    );
+    await user.click(screen.getByRole("button", { name: /^Send$/ }));
+
+    const signal = executeOperationMock.mock.calls.at(-1)?.[2]?.signal;
+    expect(signal).toBeDefined();
+
+    unmount();
+    // The shell must abort the running request on unmount (previously the
+    // cleanup captured the mount-time controller, i.e. null, leaking fetches).
+    expect(signal?.aborted).toBe(true);
+  });
+
   it("can sign out after signing in", async () => {
     const user = userEvent.setup();
     executeOperationMock.mockImplementation(async (op) =>

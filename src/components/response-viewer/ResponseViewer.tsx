@@ -71,14 +71,27 @@ export function ResponseViewer({ result, op }: ResponseViewerProps) {
     };
   }, [objectUrl]);
 
+  // Clear the copy-feedback timer on unmount so it never fires after the
+  // component is gone.
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current !== undefined) clearTimeout(copiedTimer.current);
+    };
+  }, []);
+
   const response = result?.ok ? result.response : httpError;
 
-  const rawText =
-    response && response.kind !== "binary"
-      ? response.kind === "json"
-        ? formatJson(response.body)
-        : response.raw
-      : "";
+  // Formatting a large body is expensive; only recompute when the response
+  // itself changes (not on tab/view/copy state changes).
+  const rawText = useMemo(
+    () =>
+      response && response.kind !== "binary"
+        ? response.kind === "json"
+          ? formatJson(response.body)
+          : response.raw
+        : "",
+    [response],
+  );
 
   const bodyForRender =
     response && response.kind === "binary"
@@ -104,7 +117,9 @@ export function ResponseViewer({ result, op }: ResponseViewerProps) {
       anchor.href = url;
       anchor.download = `dummyjson-${op.id}.json`;
       anchor.click();
-      URL.revokeObjectURL(url);
+      // Revoking synchronously can cancel the download in some browsers, so
+      // defer the revoke to after the click has been processed.
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     } catch {
       // Downloads unavailable in the current context; ignore.
     }

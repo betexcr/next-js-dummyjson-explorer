@@ -2,8 +2,15 @@
  * Collapsible JSON tree for response bodies (TASK-023). Built on native
  * `<details>` elements so collapse/expand is keyboard-accessible for free
  * and requires no per-node React state.
+ *
+ * Depth is capped so pathologically deep responses (e.g. an echoed custom
+ * body from the HTTP mock endpoints) render a truncation marker instead of
+ * overflowing the call stack.
  */
 import { ChevronRight } from "lucide-react";
+
+/** Maximum nesting depth rendered before eliding deeper values. */
+export const MAX_TREE_DEPTH = 32;
 
 export function JsonTree({ data }: { data: unknown }) {
   // Native <details>/<summary> provides disclosure semantics and keyboard
@@ -11,12 +18,15 @@ export function JsonTree({ data }: { data: unknown }) {
   // navigation to be truthful).
   return (
     <div className="space-y-0.5 font-mono text-xs leading-relaxed">
-      <JsonNode data={data} />
+      <JsonNode data={data} depth={0} />
     </div>
   );
 }
 
-function JsonNode({ data }: { data: unknown }) {
+function JsonNode({ data, depth }: { data: unknown; depth: number }) {
+  if (depth > MAX_TREE_DEPTH) {
+    return <span className="text-zinc-400">…</span>;
+  }
   if (data === null) {
     return <span className="text-zinc-400">null</span>;
   }
@@ -33,10 +43,11 @@ function JsonNode({ data }: { data: unknown }) {
   if (typeof data === "bigint") {
     return <span className="text-amber-600 dark:text-amber-400">{String(data)}</span>;
   }
-  return <Container data={data} />;
+  return <Container data={data} depth={depth} />;
 }
 
-function Container({ data }: { data: unknown }) {
+function Container({ data, depth }: { data: unknown; depth: number }) {
+  const nextDepth = depth + 1;
   if (Array.isArray(data)) {
     return (
       <details open className="group">
@@ -49,7 +60,7 @@ function Container({ data }: { data: unknown }) {
           {data.map((item, index) => (
             <div key={index}>
               <span className="mr-1 text-zinc-400">{index}:</span>
-              <JsonNode data={item} />
+              <JsonNode data={item} depth={nextDepth} />
             </div>
           ))}
         </div>
@@ -69,7 +80,7 @@ function Container({ data }: { data: unknown }) {
         {entries.map(([key, value]) => (
           <div key={key}>
             <span className="mr-1 text-zinc-500">{key}:</span>
-            <JsonNode data={value} />
+            <JsonNode data={value} depth={nextDepth} />
           </div>
         ))}
       </div>

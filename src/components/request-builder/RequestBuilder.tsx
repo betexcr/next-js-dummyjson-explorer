@@ -5,7 +5,7 @@
  * header, auth, and body controls for the selected operation and exposes
  * Send / Cancel / Reset plus copyable cURL and fetch snippets (TASK-025).
  */
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, Copy, ExternalLink, RotateCcw, Send, X } from "lucide-react";
 import type { ApiOperation, ParameterValues } from "@/lib/dummyjson/types";
 import { BODY_PARAM, buildRequest } from "@/lib/request/request-builder";
@@ -33,6 +33,12 @@ export interface RequestBuilderProps {
 function CodeBlock({ label, code }: { label: string; code: string }) {
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current !== undefined) clearTimeout(copiedTimer.current);
+    };
+  }, []);
 
   const copy = async (): Promise<void> => {
     try {
@@ -93,11 +99,13 @@ export function RequestBuilder(props: RequestBuilderProps) {
   const bodyValue = (values[BODY_PARAM] as string | undefined) ?? "";
   const setBody = (next: string): void => setValue(BODY_PARAM, next);
 
-  const toCode = (): { curl: string; fetch: string } => {
-    // buildRequest throws RequestBuildError for invalid values (e.g. missing
-    // required path parameters, empty body). Prefer current values, then the
-    // documented defaults, and finally a placeholder so the panel never
-    // crashes while rendering code snippets.
+  // Building requests and serializing snippets is pure, so memoize per
+  // operation + values instead of recomputing on every render. buildRequest
+  // throws RequestBuildError for invalid values (e.g. missing required path
+  // parameters, empty body): prefer current values, then the documented
+  // defaults, and finally a placeholder so the panel never crashes while
+  // rendering code snippets.
+  const { curl, fetch: fetchSnippet } = useMemo(() => {
     try {
       const built = buildRequest({
         op,
@@ -124,9 +132,7 @@ export function RequestBuilder(props: RequestBuilderProps) {
         };
       }
     }
-  };
-
-  const { curl, fetch: fetchSnippet } = toCode();
+  }, [op, values]);
 
   return (
     <section
