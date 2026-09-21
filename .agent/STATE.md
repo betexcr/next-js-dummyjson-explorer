@@ -6,10 +6,10 @@
 ## Current Status
 
 - **Project:** DummyJSON Workbench
-- **Phase:** Phase 6/7 — Hardening (TASK-035/036 done; next: TASK-037 error handling)
+- **Phase:** Phase 7 — Production Hardening (TASK-037 error handling done; next: TASK-038 loading/performance)
 - **Status:** IN_PROGRESS
-- **Current Task:** TASK-037 — Error handling review
-- **Last Completed Task:** TASK-035/036 — UI quality review + accessibility hardening (WCAG 2.2 AA pass)
+- **Current Task:** TASK-038 — Loading/performance hardening
+- **Last Completed Task:** TASK-037 — Error handling (approved by independent review)
 - **Blocked:** No
 - **Last Updated:** 2026-09-21
 
@@ -55,9 +55,9 @@ assertion correctness; and this batch adding WCAG 2.2 AA hardening (skip link,
 reduced-motion, mobile drawer, focus management, ARIA wiring, contrast, target sizes)
 plus a mobile-drawer regression test. All verification is green.
 
-Remaining: TASK-037 (error handling), TASK-038 (loading/performance), TASK-039 (security
-review), TASK-040-043 (final verification + report). TASK-023's optional response-viewer
-body search is satisfied by native browser find (documented in TASK-035).
+Remaining: TASK-038 (loading/performance), TASK-039 (security review), TASK-040-043
+(final verification + report). TASK-023's optional response-viewer body search is
+satisfied by native browser find (documented in TASK-035).
 
 ## Repository Health
 
@@ -66,9 +66,9 @@ body search is satisfied by native browser find (documented in TASK-035).
 | Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
-| Unit tests | PASS | 108 tests / 16 files, all passed |
+| Unit tests | PASS | 113 tests / 16 files, all passed |
 | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
-| Playwright | PASS | 21 tests passed (chromium, port 3100, mocked transport) |
+| Playwright | PASS | 23 tests passed (chromium, port 3100, mocked transport) |
 | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
 | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
 | Final review | PENDING | Phase 8 |
@@ -250,6 +250,26 @@ RESULT: TASK-035/036 verified complete. Reviewer findings triaged: all actionabl
 items fixed; declined alert aria-label removal and BinaryPreview alt change (see
 decision log).
 NEXT TASK: TASK-037 error handling review.
+DATE: 2026-09-21 (this session)
+TASK: TASK-037 error handling hardening
+CHANGES:
+- response.ts: exported isApiError() type guard; malformed JSON on non-2xx responses
+  falls back to kind:"text" instead of throwing invalid-json (status stays primary).
+- client.ts: executeOperation catch returns structured ApiErrors unchanged
+  (isApiError(cause) ? cause : toError(...)) — invalid-json was previously
+  relabeled as network by toError.
+- ResponseViewer: network errors render cause detail (Error message, string, or
+  JSON.stringify); invalid-json shows raw body truncated to 500 chars labeled
+  "raw body (truncated)".
+- Tests: +1 response.test (malformed error body stays text), +1 client regression
+  (invalid-json not relabeled), +4 ResponseViewer unit tests, +2 E2E (network
+  abort; malformed JSON fulfill). 113 unit, 23 E2E.
+VERIFICATION: bun lint 0; bun run typecheck 0; bun run test 113/113; bun run build 0;
+bunx playwright test 23/23. Checkpoint commits 09d2483 + 75276b8.
+RESULT: TASK-037 verified complete. Independent reviewer: APPROVED (0 CRITICAL/HIGH,
+  2 MEDIUM — non-Error cause detail fixed; cancel-suppresses-aborted is deliberate
+  UX, documented in TASKS.md).
+NEXT TASK: TASK-038 loading/performance hardening.
 ```
 
 ## Continuation Instructions
@@ -288,7 +308,7 @@ Result: exit 0
 Date: 2026-09-21
 
 Command: bun run test
-Result: 108 passed, 0 failed (16 files)
+Result: 113 passed, 0 failed (16 files)
 Date: 2026-09-21
 
 Command: bun run build
@@ -296,14 +316,15 @@ Result: exit 0 (routes: /, /_not-found)
 Date: 2026-09-21
 
 Command: bunx playwright test
-Result: 21 passed, 0 failed (6 spec files, chromium)
+Result: 23 passed, 0 failed (6 spec files, chromium)
 Date: 2026-09-21
 ```
 
 ## Next Action
 
-TASK-037 � Error handling review. Verify network/HTTP/validation/malformed-response/
-timeout-cancellation/unexpected error paths end-to-end (client, ResponseViewer,
-RequestBuilder banner, auth errors), confirm E2E coverage of network + HTTP failures,
-then TASK-038 (loading/performance) and TASK-039 (security review).
+TASK-038 — Loading/performance hardening: avoid unnecessary requests/renders, keep
+large responses usable (LARGE_RESPONSE_THRESHOLD exists in format-json; verify), keep
+the explorer responsive (memoized search), bound history (already 100 entries), and
+address obvious leaks (object URLs revoked, timers cleared — audit). Then TASK-039
+(security review).
 

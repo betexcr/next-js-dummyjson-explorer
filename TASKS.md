@@ -471,8 +471,24 @@ live regions, placeholder contrast (light zinc-500 / dark zinc-400).
 # Phase 7 — Production Hardening
 
 ## TASK-037 — Error handling
-Status: `[ ]`
+Status: `[x]`
 Handle network, HTTP, validation, malformed-response, timeout/cancellation, and unexpected errors.
+
+Implemented and verified:
+- Structured ApiErrors (network/timeout/aborted/http/invalid-json/validation) flow through
+  `executeOperation` unchanged (`isApiError` guard in `response.ts`; client catch no longer
+  collapses them into generic network errors via `toError`).
+- HTTP error responses whose JSON body is malformed now fall back to `kind: "text"` so the
+  status/statusText remain the primary signal (`httpError` still carries the status).
+- ResponseViewer error panel: network errors show the underlying cause detail (Error message,
+  string, or JSON-stringified value), invalid-json errors show the raw body truncated to 500
+  chars; timeout/aborted/validation each render their type + message.
+- User-initiated cancel deliberately returns to the idle state (no "aborted" error flashed);
+  timeouts surface because the client's internal timer aborts only the internal signal.
+- Tests: +1 response.test, +1 client regression (invalid-json not relabeled as network),
+  +4 ResponseViewer unit tests, +2 E2E (network abort; malformed JSON fulfill). All 113 unit
+  tests, lint, typecheck, build, and 23 Playwright tests pass.
+- Independent reviewer verdict: APPROVED (0 CRITICAL/HIGH; MEDIUM on non-Error causes fixed).
 
 ## TASK-038 — Loading/performance hardening
 Status: `[ ]`
