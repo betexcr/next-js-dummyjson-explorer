@@ -27,3 +27,4 @@ HAS_NEXT_MARKUP=False
 HAS_CLIENT_SCRIPT=False
 CONNECTIONS=
 - [2026-09-21 00:38:19] Harness started. MaxTurns=100 SoftNoProgressLimit=3 HardNoProgressLimit=12
+- [2026-09-21 20:47:42] Completion detected after turn 2.
