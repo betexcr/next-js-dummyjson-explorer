@@ -4,9 +4,10 @@
  * Pure store helpers for base URL and request timeout. Settings are persisted
  * to localStorage so they survive reloads, but they are validated before use.
  */
-export const SETTINGS_STORAGE_KEY = "djwb.settings";
+import { DEFAULT_BASE_URL } from "@/lib/dummyjson/client";
 
-export const DEFAULT_BASE_URL = "https://dummyjson.com";
+export const SETTINGS_STORAGE_KEY = "djwb.settings";
+export { DEFAULT_BASE_URL };
 export const DEFAULT_TIMEOUT_MS = 30_000;
 export const MIN_TIMEOUT_MS = 1_000;
 export const MAX_TIMEOUT_MS = 120_000;
@@ -21,10 +22,16 @@ export const defaultSettings: AppSettings = {
   timeoutMs: DEFAULT_TIMEOUT_MS,
 };
 
-function isValidUrl(value: string): boolean {
+function isValidBaseUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    // A base URL for API requests must be an origin + optional pathname only:
+    // no query string, fragment, username, or password.
+    if (url.search !== "") return false;
+    if (url.hash !== "") return false;
+    if (url.username !== "" || url.password !== "") return false;
+    return true;
   } catch {
     return false;
   }
@@ -39,7 +46,7 @@ function clampTimeout(value: number): number {
 /** Sanitizes raw settings values into a safe, normalized record. */
 export function normalizeSettings(raw: Partial<AppSettings>): AppSettings {
   const baseUrl =
-    raw.baseUrl && isValidUrl(raw.baseUrl) ? raw.baseUrl : DEFAULT_BASE_URL;
+    raw.baseUrl && isValidBaseUrl(raw.baseUrl) ? raw.baseUrl : DEFAULT_BASE_URL;
   const timeoutMs = clampTimeout(raw.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   return { baseUrl, timeoutMs };
 }

@@ -5,6 +5,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getOperation } from "./registry";
 import { BODY_PARAM, executeOperation } from "./client";
+import { USE_AUTH_ROUTE_PARAM } from "@/lib/request/request-builder";
 
 function jsonResponse(
   body: unknown,
@@ -47,6 +48,38 @@ describe("DummyJSON client", () => {
     expect(init.method).toBe("GET");
   });
 
+  it("uses the configured base URL and timeout for requests", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            const signal = init.signal as AbortSignal;
+            signal.addEventListener("abort", () => {
+              const err = new Error("Aborted");
+              err.name = "AbortError";
+              reject(err);
+            });
+          }),
+      );
+
+    const result = await executeOperation(
+      getOperation("products-list")!,
+      {},
+      {
+        baseUrl: "https://custom.example/api",
+        timeoutMs: 25,
+        fetchFn,
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.type).toBe("timeout");
+    const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://custom.example/api/products");
+  });
+
   it("injects the bearer token for authenticated operations", async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ id: 1 }));
 
@@ -62,6 +95,47 @@ describe("DummyJSON client", () => {
 
     expect(result.ok).toBe(true);
     const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>)["Authorization"]).toBe(
+      "Bearer token-123",
+    );
+  });
+
+  it("does not send the bearer token to unauthenticated operations", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ products: [] }));
+
+    const result = await executeOperation(
+      getOperation("products-list")!,
+      {},
+      {
+        baseUrl: "https://example.test",
+        authToken: "token-123",
+        fetchFn,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(
+      (init.headers as Record<string, string>)["Authorization"],
+    ).toBeUndefined();
+  });
+
+  it("sends the bearer token for authenticated resource routes", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ products: [] }));
+
+    const result = await executeOperation(
+      getOperation("products-list")!,
+      { [USE_AUTH_ROUTE_PARAM]: true },
+      {
+        baseUrl: "https://example.test",
+        authToken: "token-123",
+        fetchFn,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://example.test/auth/products");
     expect((init.headers as Record<string, string>)["Authorization"]).toBe(
       "Bearer token-123",
     );

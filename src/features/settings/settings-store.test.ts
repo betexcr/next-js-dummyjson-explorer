@@ -27,6 +27,18 @@ describe("settings store", () => {
     ).toBe("https://example.com/api");
   });
 
+  it("rejects base URLs with query strings, fragments, or credentials", () => {
+    expect(normalizeSettings({ baseUrl: "https://example.com?x=1" }).baseUrl).toBe(
+      defaultSettings.baseUrl,
+    );
+    expect(normalizeSettings({ baseUrl: "https://example.com#frag" }).baseUrl).toBe(
+      defaultSettings.baseUrl,
+    );
+    expect(
+      normalizeSettings({ baseUrl: "https://user:pass@example.com" }).baseUrl,
+    ).toBe(defaultSettings.baseUrl);
+  });
+
   it("clamps timeouts to the allowed range", () => {
     expect(normalizeSettings({ timeoutMs: 100 }).timeoutMs).toBe(MIN_TIMEOUT_MS);
     expect(normalizeSettings({ timeoutMs: 999_999 }).timeoutMs).toBe(

@@ -35,6 +35,16 @@ export class RequestBuildError extends Error {
   }
 }
 
+function joinBasePath(base: string, pathname: string): string {
+  const trimmed = base.trim();
+  if (trimmed === "" || trimmed === "/") return pathname;
+  const url = new URL(trimmed);
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}${pathname}`;
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
 function encodePathSegment(value: string): string {
   // encodeURIComponent also escapes `!` `'` `(` `)` `*` which are legal in
   // path segments; use the RFC 3986-safe form for predictable URLs.
@@ -200,10 +210,9 @@ export function buildRequest(input: BuildRequestInput): BuiltRequest {
     );
   }
 
-  const normalizedBase = basePath.replace(/\/+$/, "");
   return {
     method: op.method,
-    pathname: `${normalizedBase}${pathname}`,
+    pathname: joinBasePath(basePath, pathname),
     query,
     headers,
     body,

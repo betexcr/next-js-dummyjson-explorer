@@ -5,7 +5,12 @@
  * encoding, cancellation, timeout, and response/error normalization. UI
  * components must not call `fetch` directly.
  */
-import { buildRequest, BODY_PARAM, toUrl } from "@/lib/request/request-builder";
+import {
+  buildRequest,
+  BODY_PARAM,
+  toUrl,
+  USE_AUTH_ROUTE_PARAM,
+} from "@/lib/request/request-builder";
 import {
   type ApiError,
   httpError,
@@ -105,7 +110,10 @@ export async function executeOperation(
     };
   }
 
-  if (authToken && authToken.trim() !== "") {
+  const useAuthRoute = values[USE_AUTH_ROUTE_PARAM] === true;
+  const needsToken =
+    op.auth === "required" || op.auth === "optional" || useAuthRoute;
+  if (authToken && authToken.trim() !== "" && needsToken) {
     built.headers["Authorization"] = `Bearer ${authToken}`;
   }
 

@@ -132,6 +132,34 @@ describe("WorkbenchShell", () => {
     );
   });
 
+  it("applies configured base URL and timeout to requests", async () => {
+    const user = userEvent.setup();
+    executeOperationMock.mockResolvedValue(okResult());
+    render(<WorkbenchShell />);
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    const dialog = await screen.findByRole("dialog", { name: "API settings" });
+    const baseUrlInput = within(dialog).getByLabelText("Base URL");
+    const timeoutInput = within(dialog).getByLabelText("Timeout (ms)");
+    await user.clear(baseUrlInput);
+    await user.type(baseUrlInput, "https://custom.example/api");
+    await user.clear(timeoutInput);
+    await user.type(timeoutInput, "5000");
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    await user.click(screen.getByRole("button", { name: itemName("products-list") }));
+    await user.click(screen.getByRole("button", { name: /^Send$/ }));
+    await screen.findByRole("status");
+    expect(executeOperationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "products-list" }),
+      expect.any(Object),
+      expect.objectContaining({
+        baseUrl: "https://custom.example/api",
+        timeoutMs: 5000,
+      }),
+    );
+  });
+
   it("records completed requests in history", async () => {
     const user = userEvent.setup();
     executeOperationMock.mockResolvedValue(okResult());

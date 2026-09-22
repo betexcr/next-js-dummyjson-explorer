@@ -209,6 +209,32 @@ describe("request builder: bodies", () => {
   });
 });
 
+describe("request builder: base URL joining", () => {
+  it("joins a base URL origin with an operation path", () => {
+    const op = opOf("products-list");
+    expect(
+      buildRequest({ op, values: {}, basePath: "https://example.test" })
+        .pathname,
+    ).toBe("https://example.test/products");
+  });
+
+  it("joins a base URL with a path prefix", () => {
+    const op = opOf("products-list");
+    expect(
+      buildRequest({ op, values: {}, basePath: "https://example.test/api/" })
+        .pathname,
+    ).toBe("https://example.test/api/products");
+  });
+
+  it("omits query parameters from the base URL", () => {
+    const op = opOf("products-list");
+    expect(
+      buildRequest({ op, values: {}, basePath: "https://example.test?x=1" })
+        .pathname,
+    ).toBe("https://example.test/products");
+  });
+});
+
 describe("substitutePath standalone", () => {
   it("leaves static paths alone", () => {
     const op = opOf("products-list");

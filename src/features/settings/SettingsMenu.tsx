@@ -4,7 +4,7 @@
  * Settings menu (TASK-041 follow-up): configure API base URL and request
  * timeout. Values are validated and persisted to localStorage.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Settings } from "lucide-react";
 import {
   DEFAULT_BASE_URL,
@@ -26,27 +26,42 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const baseUrlRef = useRef<HTMLInputElement | null>(null);
   const timeoutRef = useRef<HTMLInputElement | null>(null);
-  const wasOpen = useRef(false);
+  const titleId = useId();
 
-  useEffect(() => {
-    if (open) {
-      const first = panelRef.current?.querySelector<HTMLElement>(
-        "input, button, [tabindex]",
-      );
-      (first ?? panelRef.current)?.focus();
-    } else if (wasOpen.current) {
-      triggerRef.current?.focus();
-    }
-    wasOpen.current = open;
-  }, [open]);
-
+  // Focus the dialog on open, trap Tab, close on Escape, restore focus on close.
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const first = panelRef.current?.querySelector<HTMLElement>(
+      'input, button, [href], textarea, select, [tabindex]:not([tabindex="-1"])',
+    );
+    (first ?? panelRef.current)?.focus();
+
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
+        'input, button, [href], textarea, select, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
   }, [open]);
 
   useEffect(() => {
@@ -86,12 +101,13 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
   };
 
   return (
-    <div ref={panelRef} className="relative">
+    <div className="relative">
       <button
         ref={triggerRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="dialog"
+        aria-controls={open ? titleId : undefined}
         aria-label="Settings"
         onClick={() => setOpen((previous) => !previous)}
         className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -101,7 +117,14 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-40 mt-1 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className="absolute right-0 top-full z-40 mt-1 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        >
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -109,7 +132,10 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
             }}
             className="space-y-3"
           >
-            <h2 className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+            <h2
+              id={titleId}
+              className="text-xs font-semibold text-zinc-700 dark:text-zinc-200"
+            >
               API settings
             </h2>
             <div>

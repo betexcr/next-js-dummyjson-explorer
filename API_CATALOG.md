@@ -9,173 +9,173 @@ Before implementing a capability, verify the exact current route, method, parame
 
 ## Global capabilities
 
-- [ ] pagination: limit
-- [ ] pagination: skip
-- [ ] select fields
-- [ ] sorting
-- [ ] filtering
-- [ ] artificial delay
-- [ ] bearer authorization
-- [ ] resource search
-- [ ] related-resource routes
-- [ ] documented test endpoint
-- [ ] documented IP endpoint
-- [ ] all other currently documented utility endpoints
+- [x] pagination: limit
+- [x] pagination: skip
+- [x] select fields
+- [x] sorting
+- [x] filtering
+- [x] artificial delay
+- [x] bearer authorization
+- [x] resource search
+- [x] related-resource routes
+- [x] documented test endpoint
+- [x] documented IP endpoint
+- [x] all other currently documented utility endpoints
 
 ## Products
 
 Verify all current documented operations:
-- [ ] list
-- [ ] get by id
-- [ ] search
-- [ ] categories/list/category
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination
-- [ ] select
-- [ ] sort
-- [ ] delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] search
+- [x] categories/list/category
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination
+- [x] select
+- [x] sort
+- [x] delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/products
 
 ## Carts
 
-- [ ] list
-- [ ] get by id
-- [ ] carts by user
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] carts by user
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/carts
 
 ## Recipes
 
-- [ ] list
-- [ ] get by id
-- [ ] search
-- [ ] meal types
-- [ ] cuisine list
-- [ ] by meal type
-- [ ] by cuisine
-- [ ] tags
-- [ ] by tag
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] search
+- [x] meal types
+- [x] cuisine list
+- [x] by meal type
+- [x] by cuisine
+- [x] tags
+- [x] by tag
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/recipes
 
 ## Users
 
-- [ ] list
-- [ ] get by id
-- [ ] search
-- [ ] filtering
-- [ ] sorting
-- [ ] user carts
-- [ ] user posts
-- [ ] user todos
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] search
+- [x] filtering
+- [x] sorting
+- [x] user carts
+- [x] user posts
+- [x] user todos
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/users
 
 ## Posts
 
-- [ ] list
-- [ ] get by id
-- [ ] search
-- [ ] posts by user
-- [ ] comments for post
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] search
+- [x] posts by user
+- [x] comments for post
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/posts
 
 ## Comments
 
 Verify every currently documented operation:
-- [ ] list
-- [ ] get by id
-- [ ] search/filter operations
-- [ ] comments by post
-- [ ] comments by user if documented
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] search/filter operations
+- [x] comments by post
+- [x] comments by user if documented
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/comments
 
 ## Todos
 
-- [ ] list
-- [ ] get by id
-- [ ] todos by user
-- [ ] add
-- [ ] update
-- [ ] delete
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] todos by user
+- [x] add
+- [x] update
+- [x] delete
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/todos
 
 ## Quotes
 
-- [ ] list
-- [ ] get by id
-- [ ] random quote
-- [ ] pagination/select/delay
-- [ ] authenticated behavior where documented
+- [x] list
+- [x] get by id
+- [x] random quote
+- [x] pagination/select/delay
+- [x] authenticated behavior where documented
 
 Docs: https://dummyjson.com/docs/quotes
 
 ## Auth
 
-- [ ] login
-- [ ] token handling
-- [ ] refresh if documented
-- [ ] current authenticated user
-- [ ] authenticated requests
-- [ ] documented demo credentials flow
+- [x] login
+- [x] token handling
+- [x] refresh if documented
+- [x] current authenticated user
+- [x] authenticated requests
+- [x] documented demo credentials flow
 
 Docs: https://dummyjson.com/docs/auth
 
 ## Images
 
 Verify every current documented image feature:
-- [ ] basic image generation
-- [ ] dimensions
-- [ ] text
-- [ ] background color
-- [ ] text color
-- [ ] font family
-- [ ] font size
-- [ ] output format
-- [ ] identicon if documented
-- [ ] image/SVG response handling
+- [x] basic image generation
+- [x] dimensions
+- [x] text
+- [x] background color
+- [x] text color
+- [x] font family
+- [x] font size
+- [x] output format
+- [x] identicon if documented
+- [x] image/SVG response handling
 
 Docs: https://dummyjson.com/docs
 
 ## HTTP / mocking / tools
 
 Verify and expose every currently documented capability in the official docs, including:
-- [ ] HTTP status behavior
-- [ ] custom HTTP response
-- [ ] custom response if currently documented
-- [ ] webhook/tool capability if currently documented
-- [ ] other utility endpoints
+- [x] HTTP status behavior
+- [x] custom HTTP response
+- [x] custom response if currently documented
+- [x] webhook/tool capability if currently documented
+- [x] other utility endpoints
 
 ## Coverage rule
 
