@@ -560,7 +560,7 @@ Run the project's actual:
 - [x] API coverage — PASS (13 groups, 80 operations)
 
 ## TASK-041 — Independent final review
-Status: `[~]`
+Status: `[x]`
 
 Review architecture, API coverage, implementation quality, security, testing, UI,
 errors, and production readiness.
@@ -580,28 +580,33 @@ Implemented fixes for second-pass reviewer findings:
   `op.auth` is `required`/`optional` or the authenticated resource route is
   explicitly enabled.
 - Base URL hardening: settings-store rejects URLs with query/fragment/credentials;
-  request-builder joins base URL and path via `URL` and strips query/hash.
+  request-builder validates and joins base URL and path via `URL`.
 - SettingsMenu: added `role="dialog"`, `aria-labelledby`, focus trap, and focus
   restore on close.
-- Added regression tests for token scoping, URL joining, base URL validation, and
-  settings wiring through WorkbenchShell.
+- Added regression tests for token scoping, URL joining, base URL validation,
+  malformed base URLs, and settings wiring through WorkbenchShell.
 - Deduplicated `DEFAULT_BASE_URL`; completed `API_CATALOG.md` checklist.
 
-Verification after second-pass fixes:
+Implemented fixes for final LOW notes:
+- SettingsMenu `aria-controls` now points to the dialog container id.
+- Client-level `baseUrl` validation rejects query/fragment/credentials.
+
+Independent reviewer verdict: PASS WITH NOTES; no CRITICAL/HIGH/MEDIUM findings;
+two LOW notes addressed.
+
+Verification:
 - lint — PASS
 - typecheck — PASS
-- unit tests — PASS (157 tests)
+- unit tests — PASS (158 tests)
 - build — PASS
 - Playwright — PASS (24 tests)
 - API coverage — PASS (13 groups, 80 operations)
 - bun audit — no vulnerabilities
 
 Acceptance:
-- [ ] No HIGH findings.
-- [ ] No CRITICAL findings.
-- [ ] Remaining MEDIUM findings fixed or documented.
-
-Pending: independent reviewer re-run to confirm findings resolved.
+- [x] No HIGH findings.
+- [x] No CRITICAL findings.
+- [x] Remaining MEDIUM findings fixed or documented.
 
 ## TASK-042 — Final diff inspection
 Status: `[ ]`
