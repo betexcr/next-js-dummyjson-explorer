@@ -226,12 +226,14 @@ describe("request builder: base URL joining", () => {
     ).toBe("https://example.test/api/products");
   });
 
-  it("omits query parameters from the base URL", () => {
+  it("throws for base URLs with query parameters or fragments", () => {
     const op = opOf("products-list");
-    expect(
-      buildRequest({ op, values: {}, basePath: "https://example.test?x=1" })
-        .pathname,
-    ).toBe("https://example.test/products");
+    expect(() =>
+      buildRequest({ op, values: {}, basePath: "https://example.test?x=1" }),
+    ).toThrowError(/query parameters or a fragment/);
+    expect(() =>
+      buildRequest({ op, values: {}, basePath: "https://example.test#frag" }),
+    ).toThrowError(/query parameters or a fragment/);
   });
 });
 

@@ -48,6 +48,26 @@ describe("DummyJSON client", () => {
     expect(init.method).toBe("GET");
   });
 
+  it("rejects base URLs with credentials, query strings, or fragments", async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ products: [] }));
+
+    for (const baseUrl of [
+      "https://user:pass@example.test",
+      "https://example.test?x=1",
+      "https://example.test#frag",
+    ]) {
+      const result = await executeOperation(
+        getOperation("products-list")!,
+        {},
+        { baseUrl, fetchFn },
+      );
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.type).toBe("validation");
+      expect(fetchFn).not.toHaveBeenCalled();
+    }
+  });
+
   it("uses the configured base URL and timeout for requests", async () => {
     const fetchFn = vi
       .fn()

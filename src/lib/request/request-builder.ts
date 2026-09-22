@@ -39,9 +39,15 @@ function joinBasePath(base: string, pathname: string): string {
   const trimmed = base.trim();
   if (trimmed === "" || trimmed === "/") return pathname;
   const url = new URL(trimmed);
+  if (url.search !== "" || url.hash !== "") {
+    throw new RequestBuildError(
+      "Base URL must not contain query parameters or a fragment.",
+    );
+  }
+  if (url.username !== "" || url.password !== "") {
+    throw new RequestBuildError("Base URL must not contain credentials.");
+  }
   url.pathname = `${url.pathname.replace(/\/+$/, "")}${pathname}`;
-  url.search = "";
-  url.hash = "";
   return url.toString();
 }
 

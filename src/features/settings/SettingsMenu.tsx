@@ -27,6 +27,7 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
   const baseUrlRef = useRef<HTMLInputElement | null>(null);
   const timeoutRef = useRef<HTMLInputElement | null>(null);
   const titleId = useId();
+  const dialogId = useId();
 
   // Focus the dialog on open, trap Tab, close on Escape, restore focus on close.
   useEffect(() => {
@@ -107,7 +108,7 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
         type="button"
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-controls={open ? titleId : undefined}
+        aria-controls={open ? dialogId : undefined}
         aria-label="Settings"
         onClick={() => setOpen((previous) => !previous)}
         className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -119,6 +120,7 @@ export function SettingsMenu({ settings, onUpdate, onReset }: SettingsMenuProps)
       {open && (
         <div
           ref={panelRef}
+          id={dialogId}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
