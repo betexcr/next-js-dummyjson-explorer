@@ -575,10 +575,22 @@ Implemented fixes for first-pass HIGH findings:
 - Added API settings (base URL + timeout) with persisted store, hook, menu UI,
   and unit tests; wired into login/execution.
 
-Verification after fixes:
+Implemented fixes for second-pass reviewer findings:
+- Bearer token scoping: `executeOperation` now attaches `Authorization` only when
+  `op.auth` is `required`/`optional` or the authenticated resource route is
+  explicitly enabled.
+- Base URL hardening: settings-store rejects URLs with query/fragment/credentials;
+  request-builder joins base URL and path via `URL` and strips query/hash.
+- SettingsMenu: added `role="dialog"`, `aria-labelledby`, focus trap, and focus
+  restore on close.
+- Added regression tests for token scoping, URL joining, base URL validation, and
+  settings wiring through WorkbenchShell.
+- Deduplicated `DEFAULT_BASE_URL`; completed `API_CATALOG.md` checklist.
+
+Verification after second-pass fixes:
 - lint — PASS
 - typecheck — PASS
-- unit tests — PASS (149 tests)
+- unit tests — PASS (157 tests)
 - build — PASS
 - Playwright — PASS (24 tests)
 - API coverage — PASS (13 groups, 80 operations)
@@ -589,7 +601,7 @@ Acceptance:
 - [ ] No CRITICAL findings.
 - [ ] Remaining MEDIUM findings fixed or documented.
 
-Pending: independent reviewer re-run to confirm HIGH findings resolved.
+Pending: independent reviewer re-run to confirm findings resolved.
 
 ## TASK-042 — Final diff inspection
 Status: `[ ]`

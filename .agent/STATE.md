@@ -66,13 +66,13 @@ TASK-023's optional response-viewer body search is satisfied by native browser f
 | Dependencies | PASS | bun install clean |
 | Typecheck | PASS | `bun typecheck` exit 0 |
 | Lint | PASS | `bun lint` exit 0 |
- | Unit tests | PASS | 149 tests / 21 files, all passed |
+ | Unit tests | PASS | 157 tests / 21 files, all passed |
  | Integration tests | PASS | covered by client.test.ts (mocked fetch, CRUD/auth/error cases) |
  | Playwright | PASS | 24 tests passed (chromium, port 3100, mocked transport) |
  | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
  | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
  | Security review | PASS | Independent reviewer: APPROVED (0 CRITICAL/HIGH/MEDIUM findings) |
- | Final review | IN_PROGRESS | Phase 8; first-pass HIGH findings fixed; verification green; reviewer re-run pending |
+ | Final review | IN_PROGRESS | Phase 8; second-pass reviewer findings fixed; verification green; final re-run pending |
 
 Use `PASS`, `FAIL`, `PENDING`, or `BLOCKED`.
 
@@ -352,6 +352,33 @@ VERIFICATION:
 - bun audit: no vulnerabilities found
 RESULT: First-pass HIGH findings implemented and all verification green.
 NEXT: re-invoke independent reviewer for final assessment.
+
+DATE: 2026-09-21 (this session)
+TASK: TASK-041 independent final review — second-pass reviewer findings
+CHANGES:
+- `src/lib/dummyjson/client.ts`: bearer token scoped to `op.auth` required/
+  optional or explicit authenticated resource route; imports
+  `USE_AUTH_ROUTE_PARAM` from request-builder.
+- `src/lib/request/request-builder.ts`: `joinBasePath` uses `URL` to join base
+  URL and path, strips query/hash, handles empty base and path prefixes.
+- `src/features/settings/settings-store.ts`: rejects base URLs with search,
+  hash, username, or password; imports canonical `DEFAULT_BASE_URL` from client.
+- `src/features/settings/SettingsMenu.tsx`: dialog role, aria-labelledby,
+  focus trap, restore focus to trigger on close.
+- Tests: token scoping (client.test.ts), URL joining (request-builder.test.ts),
+  base URL validation (settings-store.test.ts), settings wiring through
+  WorkbenchShell (WorkbenchShell.test.tsx).
+- `API_CATALOG.md`: all checklist items marked complete.
+VERIFICATION:
+- bun lint: exit 0
+- bun run typecheck: exit 0
+- bun run test: 157 passed, 0 failed (21 files)
+- bun run build: exit 0
+- bunx playwright test: 24 passed, 0 failed
+- bun run test src/lib/dummyjson/coverage.test.ts: 5 passed, 0 failed
+- bun audit: no vulnerabilities found
+RESULT: Second-pass reviewer findings implemented; all verification green.
+NEXT: third/final independent reviewer re-run for TASK-041 sign-off.
 ```
 
 ## Continuation Instructions
@@ -390,7 +417,7 @@ Result: exit 0
 Date: 2026-09-21
 
 Command: bun run test
-Result: 149 passed, 0 failed (21 files)
+Result: 157 passed, 0 failed (21 files)
 Date: 2026-09-21
 
 Command: bun run build
@@ -408,10 +435,11 @@ Date: 2026-09-21
 
 ## Next Action
 
-Re-invoke the independent reviewer for TASK-041 to confirm the first-pass HIGH
-findings are resolved and assess any remaining MEDIUM findings. Provide the
-reviewer with:
-- the files changed since TASK-039/TASK-040;
+Re-invoke the independent reviewer for TASK-041 to confirm the second-pass
+reviewer findings (token scoping, base URL handling, settings dialog semantics,
+and settings integration coverage) are resolved and provide final assessment.
+Provide the reviewer with:
+- the files changed since the last checkpoint (f6ae0af);
 - the verification evidence above;
 - the acceptance criteria (no HIGH/CRITICAL findings; MEDIUM findings fixed or
 documented).
