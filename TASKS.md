@@ -609,16 +609,16 @@ Acceptance:
 - [x] Remaining MEDIUM findings fixed or documented.
 
 ## TASK-042 — Final diff inspection
-Status: `[ ]`
+Status: `[x]`
 
 Acceptance:
-- [ ] No accidental files.
-- [ ] No secrets.
-- [ ] No debugging artifacts.
-- [ ] No generated junk.
-- [ ] No unfinished required TODOs.
-- [ ] No fake/stubbed functionality.
-- [ ] No undocumented scope changes.
+- [x] No accidental files. (working tree clean except task/state docs; no generated directories tracked)
+- [x] No secrets. (no API keys, passwords, tokens, or `.env` files in repo)
+- [x] No debugging artifacts. (no `console.log`, `debugger`, or temporary instrumentation)
+- [x] No generated junk. (`.next/`, `test-results/`, `playwright-report/`, `node_modules/` are gitignored)
+- [x] No unfinished required TODOs. (searched `TODO|FIXME|XXX|HACK` in source/tests: none)
+- [x] No fake/stubbed functionality. (all operations backed by registry; mocks only in tests)
+- [x] No undocumented scope changes. (TASKS.md and STATE.md reflect the implemented scope)
 
 ## TASK-043 — Final certification
 Status: `[ ]`

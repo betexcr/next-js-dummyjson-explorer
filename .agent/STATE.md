@@ -6,10 +6,10 @@
 ## Current Status
 
 - **Project:** DummyJSON Workbench
-- **Phase:** Phase 8 — Final Verification (TASK-040 done; next: TASK-041 independent final review)
+- **Phase:** Phase 8 — Final Verification (TASK-041 complete; next: TASK-042 final diff inspection)
 - **Status:** IN_PROGRESS
-- **Current Task:** TASK-041 — Independent final review
-- **Last Completed Task:** TASK-040 — Full automated verification (all checks passed)
+- **Current Task:** TASK-042 — Final diff inspection
+- **Last Completed Task:** TASK-041 — Independent final review (PASS WITH NOTES; no CRITICAL/HIGH/MEDIUM findings)
 - **Blocked:** No
 - **Last Updated:** 2026-09-21
 
@@ -72,7 +72,8 @@ TASK-023's optional response-viewer body search is satisfied by native browser f
  | Production build | PASS | `bun run build` exit 0, Next.js 16.3.5, static `/` |
  | API coverage | PASS | coverage.test.ts: 13 groups, 80 operations |
  | Security review | PASS | Independent reviewer: APPROVED (0 CRITICAL/HIGH/MEDIUM findings) |
- | Final review | IN_PROGRESS | Phase 8; second-pass reviewer findings fixed; verification green; final re-run pending |
+ | Final review | PASS | Independent reviewer: PASS WITH NOTES; no CRITICAL/HIGH/MEDIUM findings; LOW notes addressed |
+ | Final diff inspection | IN_PROGRESS | No accidental files, secrets, debugging artifacts, generated junk, TODOs, stubs, or undocumented scope changes |
 
 Use `PASS`, `FAIL`, `PENDING`, or `BLOCKED`.
 
@@ -435,12 +436,8 @@ Date: 2026-09-21
 
 ## Next Action
 
-Re-invoke the independent reviewer for TASK-041 to confirm the second-pass
-reviewer findings (token scoping, base URL handling, settings dialog semantics,
-and settings integration coverage) are resolved and provide final assessment.
-Provide the reviewer with:
-- the files changed since the last checkpoint (f6ae0af);
-- the verification evidence above;
-- the acceptance criteria (no HIGH/CRITICAL findings; MEDIUM findings fixed or
-documented).
+TASK-042 — Final diff inspection: verify no accidental files, no secrets, no
+debugging artifacts, no generated junk, no unfinished required TODOs, no
+fake/stubbed functionality, and no undocumented scope changes. Then proceed to
+TASK-043 — Final certification.
 
